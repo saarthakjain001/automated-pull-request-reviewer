@@ -8,6 +8,7 @@ import com.atlassian.jira.rest.client.api.domain.input.IssueInput;
 import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
 import com.atlassian.jira.rest.client.api.domain.input.LinkIssuesInput;
 import com.example.webhooksserver.client.JiraClient;
+import com.example.webhooksserver.gitUtils.ParserUtils;
 import com.example.webhooksserver.service.api.JiraService;
 import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 import com.atlassian.jira.rest.client.api.domain.BasicUser;
@@ -43,17 +44,18 @@ public class JiraServiceImpl implements JiraService {
     JiraRestClient myJiraClient = new JiraClient(USERNAME_EMAIL, API_TOKEN, HOST_URL).getRestClient();
 
     @Override
-    public List<String> createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates) {
+    public List<Long> createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id) {
 
         System.out.println("first");
         // String epicKey = createEpic(assignee, "Internship Tasks with Subtasks");
         IssueRestClient issueClient = myJiraClient.getIssueClient();
 
-        List<String> keys = new ArrayList<>();
+        List<Long> successfulIds = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
             Map<String, Object> parent = new HashMap<String, Object>();
             parent.put("key", "FKPROJ-27");
-            IssueInputBuilder issueBuilder = new IssueInputBuilder(projectKey, TASK_ISSUE_TYPE, tasks.get(i));
+            IssueInputBuilder issueBuilder = new IssueInputBuilder(projectKey, TASK_ISSUE_TYPE,
+                    ParserUtils.removeDate(tasks.get(i)));
             // issueBuilder.setAssigneeName(assignee);
 
             FieldInput parentField = new FieldInput("parent", new ComplexIssueInputFieldValue(parent));
@@ -61,6 +63,7 @@ public class JiraServiceImpl implements JiraService {
 
             if (dueDates.get(i) != null) {
                 setDueDate(dueDates.get(i), issueBuilder);
+
             } else {
                 continue;
             }
@@ -69,11 +72,16 @@ public class JiraServiceImpl implements JiraService {
             System.out.println(newIssue.getFields());
 
             Promise<BasicIssue> bPromise = issueClient.createIssue(newIssue);
-            String issueKey = bPromise.claim().getKey();
-            keys.add(issueKey);
+            try {
+                String issueKey = bPromise.claim().getKey();
+                successfulIds.add(id.get(i));
+            } catch (Exception e) {
+                continue;
+            }
+
         }
 
-        return keys;
+        return successfulIds;
     }
 
     @Override

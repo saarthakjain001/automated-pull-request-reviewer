@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+import com.example.webhooksserver.controller.JiraController;
+import com.example.webhooksserver.domain.JiraTicket;
 import com.example.webhooksserver.domain.PullRequestDetail;
 import com.example.webhooksserver.domain.PushDetail;
 import com.example.webhooksserver.dtos.IssueDto;
@@ -22,9 +24,13 @@ import com.example.webhooksserver.dtos.PayloadDto;
 import com.example.webhooksserver.dtos.PullRequestDetailDto;
 import com.example.webhooksserver.dtos.PushDetailDto;
 import com.example.webhooksserver.dtos.ReviewCommentDto;
+import com.example.webhooksserver.gitUtils.enums.JiraTicketStatus;
 import com.example.webhooksserver.gitUtils.enums.ToDoEnum;
+import com.example.webhooksserver.mapper.EntityToIssueDto;
+import com.example.webhooksserver.mapper.IssueDtoToEntity;
 import com.example.webhooksserver.mapper.PullRequestDetailDtoToEntity;
 import com.example.webhooksserver.mapper.PushDetailDtoToEntity;
+import com.example.webhooksserver.repository.JiraTicketRepository;
 import com.example.webhooksserver.repository.PullRequestDetailRepository;
 import com.example.webhooksserver.repository.PushDetailRepository;
 import com.example.webhooksserver.service.api.GithubService;
@@ -36,19 +42,24 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.example.webhooksserver.gitUtils.Pair;
+import com.example.webhooksserver.gitUtils.ParserUtils;
 
 @Service
 public class GithubServiceImpl implements GithubService {
 
     private final PushDetailRepository prDetailRepository;
     private final PullRequestDetailRepository pullRepository;
+    private final JiraTicketRepository jiraTicketRepository;
 
-    GithubServiceImpl(PushDetailRepository prDetailRepository, PullRequestDetailRepository pullRepository) {
+    GithubServiceImpl(PushDetailRepository prDetailRepository, PullRequestDetailRepository pullRepository,
+            JiraTicketRepository jiraTicketRepository) {
         this.prDetailRepository = prDetailRepository;
         this.pullRepository = pullRepository;
+        this.jiraTicketRepository = jiraTicketRepository;
     }
 
     @Override
@@ -83,10 +94,8 @@ public class GithubServiceImpl implements GithubService {
 
     @Override
     public String getPushChanges(String httpLink) {
-        String updatedRequestLink = httpLink;
-        System.out.println(updatedRequestLink);
         RestTemplate restTemplate = new RestTemplate();
-        String uri = updatedRequestLink;
+        String uri = httpLink;
         String result = restTemplate.getForObject(uri, String.class);
         return result;
     }
@@ -104,7 +113,7 @@ public class GithubServiceImpl implements GithubService {
         List<String> taskList = new ArrayList<>();
 
         System.out.println(content.length());
-        Instant start = Instant.now();
+        // Instant start = Instant.now();
         BufferedReader reader = new BufferedReader(new StringReader(content));
         int enumLength = ToDoEnum.TODO.toString().length();
         String todo = ToDoEnum.TODO.toString();
@@ -116,11 +125,10 @@ public class GithubServiceImpl implements GithubService {
                 if (currentLine.length() > (3) && currentLine.charAt(0) == '+'
                         && (startIndex = currentLine.indexOf(todo)) != -1) {
                     taskList.add(currentLine.substring(startIndex + enumLength).trim());
+                    // taskList.add(ParserUtils.removeDate(currentLine.substring(startIndex +
+                    // enumLength)).trim());
                 }
             }
-            Instant end = Instant.now();
-            Duration timeElapsed = Duration.between(start, end);
-            System.out.println("Time taken: " + timeElapsed.toMillis() + " milliseconds");
             System.out.println(taskList);
             return taskList;
         } catch (IOException e) {
@@ -134,88 +142,24 @@ public class GithubServiceImpl implements GithubService {
     public List<LocalDate> parseDate(List<String> parseStrings) {
         System.out.println(parseStrings);
         List<LocalDate> taskEndDates = new ArrayList<>();
-        // parseStrings.add("8-6-2020");
-        String regex = "(\\d{2}/\\d{2}/\\d{4})";
-        // (str.matches("\\d{4}-\\d{2}-\\d{2}"))
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-        Pattern datePattern = Pattern.compile(regex);
         for (String parseString : parseStrings) {
-            parseString.trim();
-            Matcher m = datePattern.matcher(parseString);
-            if (m.find() == true) {
-                LocalDate date = LocalDate.parse(m.group(0), formatter);
-                // System.out.println(m.group(1));
-                taskEndDates.add(date);
-
-            } else {
-                taskEndDates.add(null);
-            }
+            taskEndDates.add(ParserUtils.parseDate(parseString));
         }
         return taskEndDates;
-    }
+        // String regex = "(\\d{2}/\\d{2}/\\d{4})";
+        // DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+        // Pattern datePattern = Pattern.compile(regex);
+        // for (String parseString : parseStrings) {
+        // parseString.trim();
+        // Matcher m = datePattern.matcher(parseString);
+        // if (m.find() == true) {
+        // LocalDate date = LocalDate.parse(m.group(0), formatter);
+        // taskEndDates.add(date);
+        // } else {
+        // taskEndDates.add(null);
+        // }
+        // }
 
-    public LocalDate parseDate(String parseString) {
-        String regex = "(\\d{2}/\\d{2}/\\d{4})";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-        Pattern datePattern = Pattern.compile(regex);
-        parseString.trim();
-        Matcher m = datePattern.matcher(parseString);
-        if (m.find() == true) {
-            LocalDate date = LocalDate.parse(m.group(0), formatter);
-            // System.out.println(m.group(1));
-            return date;
-
-        } else {
-            return null;
-        }
-    }
-
-    public boolean hasDate(String parseString) {
-        String regex = "(\\d{2}/\\d{2}/\\d{4})";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-        Pattern datePattern = Pattern.compile(regex);
-        parseString.trim();
-        Matcher m = datePattern.matcher(parseString);
-        if (m.find() == true) {
-            // LocalDate date = LocalDate.parse(m.group(0), formatter);
-            // System.out.println(m.group(1));
-            return true;
-
-        } else {
-            return false;
-        }
-    }
-
-    public boolean isTodo(String parseString) {
-        parseString = parseString.trim();
-        Integer startIndex = -1;
-        if (parseString.length() > (3) && parseString.charAt(0) == '+'
-                && (startIndex = parseString.indexOf(ToDoEnum.TODO.toString())) != -1) {
-            return true;
-        }
-        return false;
-    }
-
-    public Integer LineInfo(String parseString) {
-        if (parseString.length() > 2 && parseString.charAt(0) == '@' && parseString.charAt(1) == '@') {
-            int startIndex = 4;
-            while (parseString.charAt(startIndex) != '+')
-                startIndex++;
-            int endIndex = startIndex;
-            while (parseString.charAt(endIndex) != ',') {
-                endIndex++;
-            }
-            return Integer.valueOf(parseString.substring(startIndex, endIndex));
-        }
-        return -1;
-    }
-
-    public String getfileName(String parseString) {
-        if (parseString.length() > (3) && parseString.charAt(0) == '+' && parseString.charAt(1) == '+'
-                && parseString.charAt(2) == '+' && parseString.charAt(4) == 'b') {
-            return parseString.substring(6);
-        }
-        return null;
     }
 
     @Override
@@ -242,16 +186,15 @@ public class GithubServiceImpl implements GithubService {
         try {
             String currentLine = null;
             while ((currentLine = reader.readLine()) != null) {
-                // currentLine = currentLine.trim();
                 position += 1;
-                if ((checkFile = getfileName(currentLine)) != null) {
+                if ((checkFile = ParserUtils.getfileName(currentLine)) != null) {
                     if (currentFileName != null)
                         separateTodos.put(currentFileName, positionNumbers);
                     positionNumbers = new ArrayList<>();
                     position = -1;
                     currentFileName = checkFile;
                 } else if (currentLine.length() > 0 && currentLine.charAt(0) == '+') {
-                    if (isTodo(currentLine) && !hasDate(currentLine)) {
+                    if (ParserUtils.isTodo(currentLine) && !ParserUtils.hasDate(currentLine)) {
                         System.out.println(currentLine + " " + position.toString());
                         positionNumbers.add(position);
                     }
@@ -308,6 +251,58 @@ public class GithubServiceImpl implements GithubService {
         return tasks;
     }
 
+    @Override
+    public IssueDto generateJirasFromPush(PushDetailDto pushDetailDto) {
+        // PushDetail details = this.getPushDetails(pushDetailDto);
+        String differences = this.getPushChanges(pushDetailDto.getCompare());
+        IssueDto tasks = new IssueDto();
+        tasks.setTasks(this.parseToDos(differences));
+        tasks.setUsername(pushDetailDto.getSender().getLogin());
+        tasks.setDueDates(this.parseDate(this.parseToDos(differences)));
+        System.out.println(tasks);
+        return tasks;
+    }
+
+    @Override
+    public int saveJiraTickets(IssueDto tasks) {
+        List<String> taskList = tasks.getTasks();
+        List<LocalDate> endDateList = tasks.getDueDates();
+        for (int i = 0; i < tasks.getTasks().size(); i++) {
+            if (endDateList.get(i) != null) {
+                try {
+                    jiraTicketRepository.save(IssueDtoToEntity.convertToEntity(taskList.get(i), endDateList.get(i)));
+                } catch (Exception e) {
+                    System.out.println(e);
+                    return 0;
+                }
+            }
+        }
+        return 1;
+    }
+
+    @Override
+    public IssueDto getTicketsFromDb() {
+        IssueDto tickets = EntityToIssueDto
+                .entityToDto(jiraTicketRepository.findAllByStatus(JiraTicketStatus.UNPROCESSED.toString()));
+        System.out.println(tickets);
+        return tickets;
+    }
+
+    @Override
+    public int changeJiraTicketStatus(List<Long> id) {
+        List<JiraTicket> ticketList = jiraTicketRepository.findAllById(id);
+        try {
+            for (JiraTicket tickets : ticketList) {
+                tickets.setStatus(JiraTicketStatus.PROCESSED.toString());
+                jiraTicketRepository.save(tickets);
+            }
+        } catch (Exception e) {
+            return 0;
+        }
+        return 1;
+
+    }
+
 }
 
 // 71a98124618207166888449f31265a1c20562179
@@ -321,3 +316,66 @@ public class GithubServiceImpl implements GithubService {
 // '{"path":"Dir/filex","side":"RIGHT","body":"End date not
 // specified","position":16,"commit_id":"f0065f314a19c3f880b19abdf5ff064d3c9d3971"}
 // https://api.github.com/repos/saarthakjain001/webHookTest/pulls/5/comments
+
+// public LocalDate parseDate(String parseString) {
+// String regex = "(\\d{2}/\\d{2}/\\d{4})";
+// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+// Pattern datePattern = Pattern.compile(regex);
+// parseString.trim();
+// Matcher m = datePattern.matcher(parseString);
+// if (m.find() == true) {
+// LocalDate date = LocalDate.parse(m.group(0), formatter);
+// return date;
+
+// } else {
+// return null;
+// }
+// }
+
+// public boolean hasDate(String parseString) {
+// String regex = "(\\d{2}/\\d{2}/\\d{4})";
+// DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+// Pattern datePattern = Pattern.compile(regex);
+// parseString.trim();
+// Matcher m = datePattern.matcher(parseString);
+// if (m.find() == true) {
+// return true;
+
+// } else {
+// return false;
+// }
+// }
+
+// public boolean isTodo(String parseString) {
+// parseString = parseString.trim();
+// Integer startIndex = -1;
+// if (parseString.length() > (3) && parseString.charAt(0) == '+'
+// && (startIndex = parseString.indexOf(ToDoEnum.TODO.toString())) != -1) {
+// return true;
+// }
+// return false;
+// }
+
+// public Integer LineInfo(String parseString) {
+// if (parseString.length() > 2 && parseString.charAt(0) == '@' &&
+// parseString.charAt(1) == '@') {
+// int startIndex = 4;
+// while (parseString.charAt(startIndex) != '+')
+// startIndex++;
+// int endIndex = startIndex;
+// while (parseString.charAt(endIndex) != ',') {
+// endIndex++;
+// }
+// return Integer.valueOf(parseString.substring(startIndex, endIndex));
+// }
+// return -1;
+// }
+
+// public String getfileName(String parseString) {
+// if (parseString.length() > (3) && parseString.charAt(0) == '+' &&
+// parseString.charAt(1) == '+'
+// && parseString.charAt(2) == '+' && parseString.charAt(4) == 'b') {
+// return parseString.substring(6);
+// }
+// return null;
+// }

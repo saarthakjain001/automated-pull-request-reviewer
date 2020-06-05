@@ -28,10 +28,17 @@ public interface GithubService {
 
     IssueDto generateJirasFromMerge(PullRequestDetailDto pullRequestDetailDto);
 
+    IssueDto generateJirasFromPush(PushDetailDto pushDetailDto);
+
     PullRequestDetail getPullRequestDetails(String jsonObject);
 
     HashMap<String, List<Integer>> getLinesTodosWithoutDates(String content);
 
     String putComment(HashMap<String, List<Integer>> todosWithoutDates, PullRequestDetailDto pullRequestDetailDto);
 
+    int saveJiraTickets(IssueDto tasks);
+
+    IssueDto getTicketsFromDb();
+
+    int changeJiraTicketStatus(List<Long> id);
 }

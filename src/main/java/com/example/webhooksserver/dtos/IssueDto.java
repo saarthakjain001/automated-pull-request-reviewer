@@ -7,6 +7,7 @@ import java.util.List;
 
 @Data
 public class IssueDto {
+    private List<Long> id;
     private String username;
     private List<String> tasks;
     private List<LocalDate> dueDates;

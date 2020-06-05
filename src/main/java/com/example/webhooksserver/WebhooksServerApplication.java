@@ -11,8 +11,10 @@ import com.example.webhooksserver.ruleEngine.RuleEngine;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class WebhooksServerApplication {
 
 	public static void main(String[] args) {

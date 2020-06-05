@@ -22,10 +22,14 @@ public class JiraController {
 
     }
 
+    public JiraController() {
+    }
+
     @PostMapping("/jira-service")
-    List<String> createTask(@RequestBody IssueDto jsonBody) {
+    public List<Long> createTask(@RequestBody IssueDto jsonBody) {
         System.out.println("Inside Controller");
         System.out.println(jsonBody);
-        return service.createIssue(jsonBody.getUsername(), jsonBody.getTasks(), jsonBody.getDueDates());
+        return service.createIssue(jsonBody.getUsername(), jsonBody.getTasks(), jsonBody.getDueDates(),
+                jsonBody.getId());
     }
 }
