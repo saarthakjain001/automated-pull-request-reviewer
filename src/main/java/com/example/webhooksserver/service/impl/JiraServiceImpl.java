@@ -8,6 +8,7 @@ import com.atlassian.jira.rest.client.api.domain.input.IssueInput;
 import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
 import com.atlassian.jira.rest.client.api.domain.input.LinkIssuesInput;
 import com.example.webhooksserver.client.JiraClient;
+import com.example.webhooksserver.config.JiraConfig;
 import com.example.webhooksserver.gitUtils.ParserUtils;
 import com.example.webhooksserver.service.api.JiraService;
 import com.atlassian.jira.rest.client.api.domain.BasicIssue;
@@ -15,6 +16,7 @@ import com.atlassian.jira.rest.client.api.domain.BasicUser;
 import com.atlassian.jira.rest.client.api.domain.IssueType;
 import com.atlassian.jira.rest.client.api.domain.User;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 //import com.atlassian.jira.rest.client.domain.User;
@@ -30,36 +32,50 @@ import java.util.Map;
 @Service
 public class JiraServiceImpl implements JiraService {
 
-    // @Value("${jira.projectKey}")
-    private String projectKey = "FKPROJ";
+    @Autowired
+    private JiraConfig config;
 
-    private String HOST_URL = "https://internproject.atlassian.net";
-    private String USERNAME_EMAIL = "saarthakjain001@gmail.com";
-    private String API_TOKEN = "yAJquBc6dwsn0xUeUp1201E0";
+    // @Value("${jira.projectkey}")
+    // private String projectKey;
+    // // private String projectKey = "FKPROJ";
+
+    // @Value("${jira.url}")
+    // private String url;
+    // // private String url = "https://internproject.atlassian.net";
+
+    // @Value("${jira.useremail}")
+    // private String user_email;
+    // // private String user_email = "saarthakjain001@gmail.com";
+
+    // @Value("${jira.apitoken}")
+    // private String api_token;
+    // // private String api_token = "yAJquBc6dwsn0xUeUp1201E0";
+
     private Long BUG_ISSUE_TYPE = 10003L;
     private Long TASK_ISSUE_TYPE = 10002L;
     private Long EPIC_ISSUE_TYPE = 10004L;
     private Long STORY_ISSUE_TYPE = 10001L;
 
-    JiraRestClient myJiraClient = new JiraClient(USERNAME_EMAIL, API_TOKEN, HOST_URL).getRestClient();
-
     @Override
     public List<Long> createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id) {
 
-        System.out.println("first");
+        JiraRestClient myJiraClient = new JiraClient(config.getUseremail(), config.getApitoken(), config.getUrl())
+                .getRestClient();
+        //
         // String epicKey = createEpic(assignee, "Internship Tasks with Subtasks");
         IssueRestClient issueClient = myJiraClient.getIssueClient();
 
         List<Long> successfulIds = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
-            Map<String, Object> parent = new HashMap<String, Object>();
-            parent.put("key", "FKPROJ-27");
-            IssueInputBuilder issueBuilder = new IssueInputBuilder(projectKey, TASK_ISSUE_TYPE,
+            // Map<String, Object> parent = new HashMap<String, Object>();
+            // parent.put("key", "FKPROJ-27");
+            IssueInputBuilder issueBuilder = new IssueInputBuilder(config.getProjectkey(), TASK_ISSUE_TYPE,
                     ParserUtils.removeDate(tasks.get(i)));
             // issueBuilder.setAssigneeName(assignee);
 
-            FieldInput parentField = new FieldInput("parent", new ComplexIssueInputFieldValue(parent));
-            issueBuilder.setFieldInput(parentField);
+            // FieldInput parentField = new FieldInput("parent", new
+            // ComplexIssueInputFieldValue(parent));
+            // issueBuilder.setFieldInput(parentField);
 
             if (dueDates.get(i) != null) {
                 setDueDate(dueDates.get(i), issueBuilder);
@@ -76,6 +92,7 @@ public class JiraServiceImpl implements JiraService {
                 String issueKey = bPromise.claim().getKey();
                 successfulIds.add(id.get(i));
             } catch (Exception e) {
+                System.out.println(e);
                 continue;
             }
 
@@ -85,9 +102,9 @@ public class JiraServiceImpl implements JiraService {
     }
 
     @Override
-    public String createEpic(String assignee, String epicTask) {
+    public String createEpic(String assignee, String epicTask, JiraRestClient myJiraClient) {
         IssueRestClient issueClient = myJiraClient.getIssueClient();
-        IssueInputBuilder issueBuilder = new IssueInputBuilder(projectKey, EPIC_ISSUE_TYPE, epicTask);
+        IssueInputBuilder issueBuilder = new IssueInputBuilder(config.getProjectkey(), EPIC_ISSUE_TYPE, epicTask);
         IssueInput newIssue = issueBuilder.build();
         System.out.println(newIssue.getFields());
         return issueClient.createIssue(newIssue).claim().getKey();
@@ -101,3 +118,12 @@ public class JiraServiceImpl implements JiraService {
     }
 
 }
+// System.out.println(config.getProjectkey());
+// // System.out.println(config.getUrl());
+// // System.out.println(config.getUseremail());
+// System.out.println(api_token);
+// // System.out.println("first");
+
+// JiraRestClient myJiraClient = new JiraClient(config.getUseremail(),
+// config.getApitoken(), config.getUrl())
+// .getRestClient();

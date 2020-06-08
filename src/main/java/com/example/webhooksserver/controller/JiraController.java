@@ -17,12 +17,9 @@ public class JiraController {
     @Autowired
     private JiraService service;
 
-    JiraController(JiraService service) {
+    public JiraController(JiraService service) {
         this.service = service;
 
-    }
-
-    public JiraController() {
     }
 
     @PostMapping("/jira-service")

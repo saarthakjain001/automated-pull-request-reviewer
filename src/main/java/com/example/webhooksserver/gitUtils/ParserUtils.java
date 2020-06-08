@@ -22,7 +22,7 @@ public class ParserUtils {
     }
 
     public static boolean hasDate(String parseString) {
-        String regex = "(\\d{2}(/|-)\\d{2}(/|-)\\d{4})";
+        String regex = "(\\d{1,2}(/|-)\\d{1,2}(/|-)\\d{4})";
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
         Pattern datePattern = Pattern.compile(regex);
         parseString.trim();
@@ -37,10 +37,16 @@ public class ParserUtils {
 
     public static LocalDate parseDate(String parseString) {
         LocalDate date;
-        String regex = "(\\d{2}(/|-)\\d{2}(/|-)\\d{4})";
+        String regex = "(\\d{1,2}(/|-)\\d{1,2}(/|-)\\d{4})";
         List<DateTimeFormatter> formatter = new ArrayList<>();
         formatter.add(DateTimeFormatter.ofPattern("dd-MM-uuuu"));
         formatter.add(DateTimeFormatter.ofPattern("dd/MM/uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("d/M/uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("d-M-uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("dd/M/uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("dd-M-uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("d/MM/uuuu"));
+        formatter.add(DateTimeFormatter.ofPattern("d-MM-uuuu"));
         Pattern datePattern = Pattern.compile(regex);
         parseString.trim();
         Matcher m = datePattern.matcher(parseString);
@@ -68,7 +74,7 @@ public class ParserUtils {
     }
 
     public static String removeDate(String todoString) {
-        String regex = "(\\d{2}(/|-)\\d{2}(/|-)\\d{4})";
+        String regex = "(\\d{1,2}(/|-)\\d{1,2}(/|-)\\d{4})";
         Pattern datePattern = Pattern.compile(regex);
         Matcher m = datePattern.matcher(todoString);
         if (m.find())

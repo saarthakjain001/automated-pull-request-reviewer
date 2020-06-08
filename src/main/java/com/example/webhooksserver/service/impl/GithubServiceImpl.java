@@ -37,6 +37,7 @@ import com.example.webhooksserver.service.api.GithubService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,15 @@ import com.example.webhooksserver.gitUtils.ParserUtils;
 
 @Service
 public class GithubServiceImpl implements GithubService {
+
+    @Value("${github.api.url}")
+    private String github_api_url;
+
+    @Value("${github.authorization.token}")
+    private String auth_token;
+
+    @Value("${github.user.agent}")
+    private String user_agent;
 
     private final PushDetailRepository prDetailRepository;
     private final PullRequestDetailRepository pullRepository;
@@ -213,15 +223,20 @@ public class GithubServiceImpl implements GithubService {
     @Override
     public String putComment(HashMap<String, List<Integer>> todosWithoutDates,
             PullRequestDetailDto pullRequestDetailDto) {
-        String url = "https://api.github.com";
+        // String url = "https://api.github.com";
+        String url = github_api_url;
+
         url += "/repos/" + pullRequestDetailDto.getRepository().getFull_name() + "/pulls/"
                 + pullRequestDetailDto.getNumber().toString() + "/comments";
         System.out.println(url);
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("User-Agent", "saarthakjain001");
-        headers.add("Authorization", "token 71a98124618207166888449f31265a1c20562179");
+        // headers.add("User-Agent", "saarthakjain001");
+        headers.add("User-Agent", user_agent);
+        // headers.add("Authorization", "token
+        // 71a98124618207166888449f31265a1c20562179");
+        headers.add("Authorization", auth_token);
         for (Map.Entry<String, List<Integer>> elements : todosWithoutDates.entrySet()) {
             String filename = elements.getKey();
             List<Integer> lineNumbers = elements.getValue();

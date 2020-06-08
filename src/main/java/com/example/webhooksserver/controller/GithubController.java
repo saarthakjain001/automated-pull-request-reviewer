@@ -73,6 +73,7 @@ public class GithubController {
                         .getPullRequestChanges(pullRequestDetailDto.getPull_request().getDiff_url());
                 gitService.putComment(gitService.getLinesTodosWithoutDates(differences), pullRequestDetailDto);
                 return null;
+
             } else if (pullRequestDetailDto.getAction().equals(PullRequestAction.synchronize.toString())) {
                 // PullRequestDetail details = gitService.getPullRequestDetails(payload);
                 // System.out.println(details);
@@ -92,7 +93,7 @@ public class GithubController {
 
     }
 
-    @Scheduled(fixedDelay = 30000)
+    @Scheduled(fixedDelay = 60000)
     public void scheduledTicketGenerator() {
         JiraController jiraController = new JiraController(jiraService);
         System.out.println(gitService.getTicketsFromDb());
