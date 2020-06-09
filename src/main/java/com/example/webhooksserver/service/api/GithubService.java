@@ -14,25 +14,25 @@ import com.example.webhooksserver.dtos.PushDetailDto;
 import io.swagger.client.model.Issue;
 
 public interface GithubService {
-    PushDetail getPushDetails(String jsonObject);
+    // PushDetail getPushDetails(String jsonObject);
 
-    String getPushChanges(String httpLink);
+    String getCommittedChanges(String httpLink);
 
-    String getPullRequestChanges(String httpLink);
+    // String getPullRequestChanges(String httpLink);
 
     List<String> parseToDos(String content);
 
     List<LocalDate> parseDate(List<String> parseString);
 
-    IssueDto generateJirasFromPush(String payload);
+    // IssueDto generateJirasFromPush(String payload);
 
     IssueDto generateJirasFromMerge(PullRequestDetailDto pullRequestDetailDto);
 
     IssueDto generateJirasFromPush(PushDetailDto pushDetailDto);
 
-    PullRequestDetail getPullRequestDetails(String jsonObject);
+    // PullRequestDetail getPullRequestDetails(String jsonObject);
 
-    HashMap<String, List<Integer>> getLinesTodosWithoutDates(String content);
+    HashMap<String, List<Integer>> getTodoLinesWithoutDates(String content);
 
     String putComment(HashMap<String, List<Integer>> todosWithoutDates, PullRequestDetailDto pullRequestDetailDto);
 

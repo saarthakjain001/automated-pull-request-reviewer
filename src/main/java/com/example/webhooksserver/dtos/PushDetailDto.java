@@ -11,6 +11,5 @@ import lombok.Data;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PushDetailDto extends PayloadDto {
-
     private String compare;
 }

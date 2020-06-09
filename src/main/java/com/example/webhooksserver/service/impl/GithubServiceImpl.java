@@ -28,11 +28,11 @@ import com.example.webhooksserver.gitUtils.enums.JiraTicketStatus;
 import com.example.webhooksserver.gitUtils.enums.ToDoEnum;
 import com.example.webhooksserver.mapper.EntityToIssueDto;
 import com.example.webhooksserver.mapper.IssueDtoToEntity;
-import com.example.webhooksserver.mapper.PullRequestDetailDtoToEntity;
-import com.example.webhooksserver.mapper.PushDetailDtoToEntity;
+// import com.example.webhooksserver.mapper.PullRequestDetailDtoToEntity;
+// import com.example.webhooksserver.mapper.PushDetailDtoToEntity;
 import com.example.webhooksserver.repository.JiraTicketRepository;
-import com.example.webhooksserver.repository.PullRequestDetailRepository;
-import com.example.webhooksserver.repository.PushDetailRepository;
+// import com.example.webhooksserver.repository.PullRequestDetailRepository;
+// import com.example.webhooksserver.repository.PushDetailRepository;
 import com.example.webhooksserver.service.api.GithubService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,7 +46,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.example.webhooksserver.gitUtils.Pair;
 import com.example.webhooksserver.gitUtils.ParserUtils;
 
 @Service
@@ -61,57 +60,17 @@ public class GithubServiceImpl implements GithubService {
     @Value("${github.user.agent}")
     private String user_agent;
 
-    private final PushDetailRepository prDetailRepository;
-    private final PullRequestDetailRepository pullRepository;
+    // private final PushDetailRepository prDetailRepository;
+    // private final PullRequestDetailRepository pullRepository;
     private final JiraTicketRepository jiraTicketRepository;
 
-    GithubServiceImpl(PushDetailRepository prDetailRepository, PullRequestDetailRepository pullRepository,
-            JiraTicketRepository jiraTicketRepository) {
-        this.prDetailRepository = prDetailRepository;
-        this.pullRepository = pullRepository;
+    GithubServiceImpl(JiraTicketRepository jiraTicketRepository) {
+
         this.jiraTicketRepository = jiraTicketRepository;
     }
 
     @Override
-    public PushDetail getPushDetails(String jsonObject) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        PushDetailDtoToEntity dtoToEntity = new PushDetailDtoToEntity();
-        try {
-            PushDetail prDetail = dtoToEntity.convertToEntity(objectMapper.readValue(jsonObject, PushDetailDto.class));
-            prDetailRepository.save(prDetail);
-            return prDetail;
-        } catch (Exception e) {
-            System.out.println(e);
-            return null;
-        }
-    }
-
-    @Override
-    public PullRequestDetail getPullRequestDetails(String jsonObject) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        PullRequestDetailDtoToEntity dtoToEntity = new PullRequestDetailDtoToEntity();
-        try {
-            System.out.println(objectMapper.readValue(jsonObject, PullRequestDetailDto.class));
-            PullRequestDetail prDetail = dtoToEntity
-                    .convertToEntity(objectMapper.readValue(jsonObject, PullRequestDetailDto.class));
-            pullRepository.save(prDetail);
-            return prDetail;
-        } catch (Exception e) {
-            System.out.println(e);
-            return null;
-        }
-    }
-
-    @Override
-    public String getPushChanges(String httpLink) {
-        RestTemplate restTemplate = new RestTemplate();
-        String uri = httpLink;
-        String result = restTemplate.getForObject(uri, String.class);
-        return result;
-    }
-
-    @Override
-    public String getPullRequestChanges(String httpLink) {
+    public String getCommittedChanges(String httpLink) {
         RestTemplate restTemplate = new RestTemplate();
         String uri = httpLink;
         String result = restTemplate.getForObject(uri, String.class);
@@ -121,9 +80,9 @@ public class GithubServiceImpl implements GithubService {
     @Override
     public List<String> parseToDos(String content) {
         List<String> taskList = new ArrayList<>();
-
+        List<String> fileName = new ArrayList<>();
         System.out.println(content.length());
-        // Instant start = Instant.now();
+        String currentFile = "";
         BufferedReader reader = new BufferedReader(new StringReader(content));
         int enumLength = ToDoEnum.TODO.toString().length();
         String todo = ToDoEnum.TODO.toString();
@@ -135,8 +94,10 @@ public class GithubServiceImpl implements GithubService {
                 if (currentLine.length() > (3) && currentLine.charAt(0) == '+'
                         && (startIndex = currentLine.indexOf(todo)) != -1) {
                     taskList.add(currentLine.substring(startIndex + enumLength).trim());
-                    // taskList.add(ParserUtils.removeDate(currentLine.substring(startIndex +
-                    // enumLength)).trim());
+                    fileName.add(currentFile);
+                } else if (currentLine.length() > 3 && currentLine.charAt(0) == '+' && currentLine.charAt(1) == '+'
+                        && currentLine.charAt(2) == '+' && currentLine.charAt(4) == 'b') {
+                    currentFile = currentLine.substring(6);
                 }
             }
             System.out.println(taskList);
@@ -156,36 +117,11 @@ public class GithubServiceImpl implements GithubService {
             taskEndDates.add(ParserUtils.parseDate(parseString));
         }
         return taskEndDates;
-        // String regex = "(\\d{2}/\\d{2}/\\d{4})";
-        // DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
-        // Pattern datePattern = Pattern.compile(regex);
-        // for (String parseString : parseStrings) {
-        // parseString.trim();
-        // Matcher m = datePattern.matcher(parseString);
-        // if (m.find() == true) {
-        // LocalDate date = LocalDate.parse(m.group(0), formatter);
-        // taskEndDates.add(date);
-        // } else {
-        // taskEndDates.add(null);
-        // }
-        // }
 
     }
 
     @Override
-    public IssueDto generateJirasFromPush(String payload) {
-        PushDetail details = this.getPushDetails(payload);
-        String differences = this.getPushChanges(details.getCompare());
-        IssueDto tasks = new IssueDto();
-        tasks.setTasks(this.parseToDos(differences));
-        tasks.setUsername(details.getSender());
-        tasks.setDueDates(this.parseDate(this.parseToDos(differences)));
-        System.out.println(tasks);
-        return tasks;
-    }
-
-    @Override
-    public HashMap<String, List<Integer>> getLinesTodosWithoutDates(String content) {
+    public HashMap<String, List<Integer>> getTodoLinesWithoutDates(String content) {
         HashMap<String, List<Integer>> separateTodos = new HashMap<>();
         List<Integer> positionNumbers = new ArrayList<>();
         BufferedReader reader = new BufferedReader(new StringReader(content));
@@ -223,26 +159,22 @@ public class GithubServiceImpl implements GithubService {
     @Override
     public String putComment(HashMap<String, List<Integer>> todosWithoutDates,
             PullRequestDetailDto pullRequestDetailDto) {
-        // String url = "https://api.github.com";
         String url = github_api_url;
-
         url += "/repos/" + pullRequestDetailDto.getRepository().getFull_name() + "/pulls/"
                 + pullRequestDetailDto.getNumber().toString() + "/comments";
         System.out.println(url);
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // headers.add("User-Agent", "saarthakjain001");
         headers.add("User-Agent", user_agent);
-        // headers.add("Authorization", "token
-        // 71a98124618207166888449f31265a1c20562179");
         headers.add("Authorization", auth_token);
         for (Map.Entry<String, List<Integer>> elements : todosWithoutDates.entrySet()) {
             String filename = elements.getKey();
             List<Integer> lineNumbers = elements.getValue();
             for (int i = 0; i < lineNumbers.size(); i++) {
                 ReviewCommentDto comment = new ReviewCommentDto(filename, lineNumbers.get(i), "RIGHT",
-                        "End Date not mentioned", pullRequestDetailDto.getPull_request().getHead().getSha());
+                        "Task Completion Date not mentioned",
+                        pullRequestDetailDto.getPull_request().getHead().getSha());
                 HttpEntity<ReviewCommentDto> entity = new HttpEntity<>(comment, headers);
                 System.out.println(entity);
                 ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
@@ -257,7 +189,7 @@ public class GithubServiceImpl implements GithubService {
 
     @Override
     public IssueDto generateJirasFromMerge(PullRequestDetailDto pullRequestDetailDto) {
-        String differences = this.getPushChanges(pullRequestDetailDto.getPull_request().getDiff_url());
+        String differences = this.getCommittedChanges(pullRequestDetailDto.getPull_request().getDiff_url());
         IssueDto tasks = new IssueDto();
         tasks.setTasks(this.parseToDos(differences));
         tasks.setUsername(pullRequestDetailDto.getSender().getLogin());
@@ -268,8 +200,7 @@ public class GithubServiceImpl implements GithubService {
 
     @Override
     public IssueDto generateJirasFromPush(PushDetailDto pushDetailDto) {
-        // PushDetail details = this.getPushDetails(pushDetailDto);
-        String differences = this.getPushChanges(pushDetailDto.getCompare());
+        String differences = this.getCommittedChanges(pushDetailDto.getCompare());
         IssueDto tasks = new IssueDto();
         tasks.setTasks(this.parseToDos(differences));
         tasks.setUsername(pushDetailDto.getSender().getLogin());
@@ -393,4 +324,65 @@ public class GithubServiceImpl implements GithubService {
 // return parseString.substring(6);
 // }
 // return null;
+// }
+// @Override
+// public IssueDto generateJirasFromPush(String payload) {
+// PushDetail details = this.getPushDetails(payload);
+// String differences = this.getPushChanges(details.getCompare());
+// IssueDto tasks = new IssueDto();
+// tasks.setTasks(this.parseToDos(differences));
+// tasks.setUsername(details.getSender());
+// tasks.setDueDates(this.parseDate(this.parseToDos(differences)));
+// System.out.println(tasks);
+// return tasks;
+// }
+
+// @Override
+// public PushDetail getPushDetails(String jsonObject) {
+// ObjectMapper objectMapper = new ObjectMapper();
+// PushDetailDtoToEntity dtoToEntity = new PushDetailDtoToEntity();
+// try {
+// PushDetail prDetail =
+// dtoToEntity.convertToEntity(objectMapper.readValue(jsonObject,
+// PushDetailDto.class));
+// prDetailRepository.save(prDetail);
+// return prDetail;
+// } catch (Exception e) {
+// System.out.println(e);
+// return null;
+// }
+// }
+
+// @Override
+// public PullRequestDetail getPullRequestDetails(String jsonObject) {
+// ObjectMapper objectMapper = new ObjectMapper();
+// PullRequestDetailDtoToEntity dtoToEntity = new
+// PullRequestDetailDtoToEntity();
+// try {
+// System.out.println(objectMapper.readValue(jsonObject,
+// PullRequestDetailDto.class));
+// PullRequestDetail prDetail = dtoToEntity
+// .convertToEntity(objectMapper.readValue(jsonObject,
+// PullRequestDetailDto.class));
+// pullRepository.save(prDetail);
+// return prDetail;
+// } catch (Exception e) {
+// System.out.println(e);
+// return null;
+// }
+// }
+
+// GithubServiceImpl(PushDetailRepository prDetailRepository,
+// PullRequestDetailRepository pullRepository,
+// JiraTicketRepository jiraTicketRepository) {
+// this.prDetailRepository = prDetailRepository;
+// this.pullRepository = pullRepository;
+// this.jiraTicketRepository = jiraTicketRepository;
+// }
+// @Override
+// public String getPullRequestChanges(String httpLink) {
+// RestTemplate restTemplate = new RestTemplate();
+// String uri = httpLink;
+// String result = restTemplate.getForObject(uri, String.class);
+// return result;
 // }

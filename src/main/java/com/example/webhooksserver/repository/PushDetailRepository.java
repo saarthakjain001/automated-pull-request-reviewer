@@ -1,9 +1,10 @@
-package com.example.webhooksserver.repository;
+// package com.example.webhooksserver.repository;
 
-import com.example.webhooksserver.domain.PushDetail;
+// import com.example.webhooksserver.domain.PushDetail;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+// import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PushDetailRepository extends JpaRepository<PushDetail, Long> {
+// public interface PushDetailRepository extends JpaRepository<PushDetail, Long>
+// {
 
-}
+// }

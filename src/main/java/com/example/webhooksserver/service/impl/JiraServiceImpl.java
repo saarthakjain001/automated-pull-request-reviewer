@@ -9,6 +9,7 @@ import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
 import com.atlassian.jira.rest.client.api.domain.input.LinkIssuesInput;
 import com.example.webhooksserver.client.JiraClient;
 import com.example.webhooksserver.config.JiraConfig;
+import com.example.webhooksserver.dtos.TodoDto;
 import com.example.webhooksserver.gitUtils.ParserUtils;
 import com.example.webhooksserver.service.api.JiraService;
 import com.atlassian.jira.rest.client.api.domain.BasicIssue;
@@ -35,47 +36,22 @@ public class JiraServiceImpl implements JiraService {
     @Autowired
     private JiraConfig config;
 
-    // @Value("${jira.projectkey}")
-    // private String projectKey;
-    // // private String projectKey = "FKPROJ";
-
-    // @Value("${jira.url}")
-    // private String url;
-    // // private String url = "https://internproject.atlassian.net";
-
-    // @Value("${jira.useremail}")
-    // private String user_email;
-    // // private String user_email = "saarthakjain001@gmail.com";
-
-    // @Value("${jira.apitoken}")
-    // private String api_token;
-    // // private String api_token = "yAJquBc6dwsn0xUeUp1201E0";
-
-    private Long BUG_ISSUE_TYPE = 10003L;
-    private Long TASK_ISSUE_TYPE = 10002L;
-    private Long EPIC_ISSUE_TYPE = 10004L;
-    private Long STORY_ISSUE_TYPE = 10001L;
+    // private Long BUG_ISSUE_TYPE = 10003L;
+    // private Long TASK_ISSUE_TYPE = 10002L;
+    // private Long EPIC_ISSUE_TYPE = 10004L;
+    // private Long STORY_ISSUE_TYPE = 10001L;
 
     @Override
-    public List<Long> createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id) {
-
-        JiraRestClient myJiraClient = new JiraClient(config.getUseremail(), config.getApitoken(), config.getUrl())
-                .getRestClient();
-        //
-        // String epicKey = createEpic(assignee, "Internship Tasks with Subtasks");
+    public TodoDto createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id) {
+        JiraRestClient myJiraClient = new JiraClient(config).getRestClient();
         IssueRestClient issueClient = myJiraClient.getIssueClient();
 
         List<Long> successfulIds = new ArrayList<>();
+        List<String> retrievedJiraKeys = new ArrayList<>();
         for (int i = 0; i < tasks.size(); i++) {
-            // Map<String, Object> parent = new HashMap<String, Object>();
-            // parent.put("key", "FKPROJ-27");
-            IssueInputBuilder issueBuilder = new IssueInputBuilder(config.getProjectkey(), TASK_ISSUE_TYPE,
-                    ParserUtils.removeDate(tasks.get(i)));
-            // issueBuilder.setAssigneeName(assignee);
 
-            // FieldInput parentField = new FieldInput("parent", new
-            // ComplexIssueInputFieldValue(parent));
-            // issueBuilder.setFieldInput(parentField);
+            IssueInputBuilder issueBuilder = new IssueInputBuilder(config.getProjectkey(),
+                    Long.valueOf(config.getTasktype()), ParserUtils.removeDate(tasks.get(i)));
 
             if (dueDates.get(i) != null) {
                 setDueDate(dueDates.get(i), issueBuilder);
@@ -83,6 +59,8 @@ public class JiraServiceImpl implements JiraService {
             } else {
                 continue;
             }
+            if (config.getParent() != null)
+                setParent(config.getParent(), issueBuilder);
 
             IssueInput newIssue = issueBuilder.build();
             System.out.println(newIssue.getFields());
@@ -90,6 +68,7 @@ public class JiraServiceImpl implements JiraService {
             Promise<BasicIssue> bPromise = issueClient.createIssue(newIssue);
             try {
                 String issueKey = bPromise.claim().getKey();
+                retrievedJiraKeys.add(issueKey);
                 successfulIds.add(id.get(i));
             } catch (Exception e) {
                 System.out.println(e);
@@ -97,18 +76,19 @@ public class JiraServiceImpl implements JiraService {
             }
 
         }
-
-        return successfulIds;
+        return new TodoDto(successfulIds, retrievedJiraKeys);
     }
 
-    @Override
-    public String createEpic(String assignee, String epicTask, JiraRestClient myJiraClient) {
-        IssueRestClient issueClient = myJiraClient.getIssueClient();
-        IssueInputBuilder issueBuilder = new IssueInputBuilder(config.getProjectkey(), EPIC_ISSUE_TYPE, epicTask);
-        IssueInput newIssue = issueBuilder.build();
-        System.out.println(newIssue.getFields());
-        return issueClient.createIssue(newIssue).claim().getKey();
-    }
+    // @Override
+    // public String createEpic(String assignee, String epicTask, JiraRestClient
+    // myJiraClient) {
+    // IssueRestClient issueClient = myJiraClient.getIssueClient();
+    // IssueInputBuilder issueBuilder = new
+    // IssueInputBuilder(config.getProjectkey(), EPIC_ISSUE_TYPE, epicTask);
+    // IssueInput newIssue = issueBuilder.build();
+    // System.out.println(newIssue.getFields());
+    // return issueClient.createIssue(newIssue).claim().getKey();
+    // }
 
     void setDueDate(LocalDate dueDate, IssueInputBuilder issueBuilder) {
         Map<String, Object> date = new HashMap<String, Object>();
@@ -117,6 +97,12 @@ public class JiraServiceImpl implements JiraService {
         issueBuilder.setFieldInput(dueDateField);
     }
 
+    void setParent(String parentKey, IssueInputBuilder issueBuilder) {
+        Map<String, Object> parent = new HashMap<String, Object>();
+        parent.put("key", parentKey);
+        FieldInput parentField = new FieldInput("parent", new ComplexIssueInputFieldValue(parent));
+        issueBuilder.setFieldInput(parentField);
+    }
 }
 // System.out.println(config.getProjectkey());
 // // System.out.println(config.getUrl());
@@ -127,3 +113,12 @@ public class JiraServiceImpl implements JiraService {
 // JiraRestClient myJiraClient = new JiraClient(config.getUseremail(),
 // config.getApitoken(), config.getUrl())
 // .getRestClient();
+
+// issueBuilder.setAssigneeName(assignee);
+
+// FieldInput parentField = new FieldInput("parent", new
+// ComplexIssueInputFieldValue(parent));
+// issueBuilder.setFieldInput(parentField);
+
+// Map<String, Object> parent = new HashMap<String, Object>();
+// parent.put("key", "FKPROJ-27");

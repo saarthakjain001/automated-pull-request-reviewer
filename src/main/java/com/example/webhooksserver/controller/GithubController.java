@@ -9,9 +9,11 @@ import com.example.webhooksserver.domain.PushDetail;
 import com.example.webhooksserver.dtos.IssueDto;
 import com.example.webhooksserver.dtos.PullRequestDetailDto;
 import com.example.webhooksserver.dtos.PushDetailDto;
+import com.example.webhooksserver.dtos.TodoDto;
+import com.example.webhooksserver.gitUtils.enums.GitEvents;
 import com.example.webhooksserver.gitUtils.enums.PullRequestAction;
-import com.example.webhooksserver.mapper.ObjectToPullRequestDetailDto;
-import com.example.webhooksserver.mapper.ObjectToPushDetailDto;
+import com.example.webhooksserver.ruleEngine.ObjectToPullRequestDetailDto;
+import com.example.webhooksserver.ruleEngine.ObjectToPushDetailDto;
 import com.example.webhooksserver.ruleEngine.RuleEngine;
 import com.example.webhooksserver.service.api.GithubService;
 import com.example.webhooksserver.service.api.JiraService;
@@ -37,72 +39,107 @@ public class GithubController {
     @Autowired
     private JiraService jiraService;
 
-    GithubController(GithubService gitService, JiraService jiraService) {
-        this.gitService = gitService;
-        this.jiraService = jiraService;
-    }
+    @Autowired
+    private JiraController jiraController;
+
+    @Autowired
+    private RuleEngine ruleEngine;
+
+    @Autowired
+    private ObjectToPullRequestDetailDto objToPullRequestDto;
+
+    @Autowired
+    private ObjectToPushDetailDto objToPushDetailDto;
+
+    // GithubController(GithubService gitService, JiraService jiraService) {
+    // this.gitService = gitService;
+    // this.jiraService = jiraService;
+    // }
 
     @PostMapping("/")
-    String handlePayload(@RequestBody String payload, @RequestHeader("x-github-event") String event) {
-        RuleEngine ruleEngine = new RuleEngine();
-        ruleEngine.registerRule(new ObjectToPullRequestDetailDto()).registerRule(new ObjectToPushDetailDto());
-        // System.out.println(ruleEngine.rule(event, payload));
+    int handlePayload(@RequestBody String payload, @RequestHeader("x-github-event") String event) {
+        // RuleEngine ruleEngine = new RuleEngine();
+        // ruleEngine.registerRule(new ObjectToPullRequestDetailDto()).registerRule(new
+        // ObjectToPushDetailDto());
 
+        ruleEngine.registerRule(objToPullRequestDto).registerRule(objToPushDetailDto);
         System.out.println(event);
-        if (event.equals("push")) {
-            // PushDetailDto pushDetailDto = (PushDetailDto) ruleEngine.rule(event,
-            // payload);
-            // IssueDto tasks = gitService.generateJirasFromPush(pushDetailDto);
-            // JiraController jiraController = new JiraController(jiraService);
-            // jiraController.createTask(tasks);
-            return null;
-        } else if (event.equals("pull_request")) {
-            PullRequestDetailDto pullRequestDetailDto = (PullRequestDetailDto) ruleEngine.rule(event, payload);
-            if (pullRequestDetailDto.getAction().equals(PullRequestAction.closed.toString())) {
-                IssueDto tasks = gitService.generateJirasFromMerge(pullRequestDetailDto);
-                // JiraController jiraController = new JiraController(jiraService);
-                // jiraController.createTask(tasks);
-                if (gitService.saveJiraTickets(tasks) == 1)
-                    return "Successful";
-                else
-                    return "failed";
-            } else if (pullRequestDetailDto.getAction().equals(PullRequestAction.opened.toString())) {
-                // PullRequestDetail details = gitService.getPullRequestDetails(payload);
-                // System.out.println(details);
-                String differences = gitService
-                        .getPullRequestChanges(pullRequestDetailDto.getPull_request().getDiff_url());
-                gitService.putComment(gitService.getLinesTodosWithoutDates(differences), pullRequestDetailDto);
-                return null;
-
-            } else if (pullRequestDetailDto.getAction().equals(PullRequestAction.synchronize.toString())) {
-                // PullRequestDetail details = gitService.getPullRequestDetails(payload);
-                // System.out.println(details);
-                String differences = gitService
-                        .getPullRequestChanges(pullRequestDetailDto.getPull_request().getDiff_url());
-                gitService.putComment(gitService.getLinesTodosWithoutDates(differences), pullRequestDetailDto);
-                return null;
-            }
+        switch (event) {
+            case "pull_request":
+                PullRequestDetailDto pullRequestDetailDto = (PullRequestDetailDto) ruleEngine.rule(event, payload);
+                String differences;
+                switch (pullRequestDetailDto.getAction()) {
+                    case "closed":
+                        IssueDto tasks = gitService.generateJirasFromMerge(pullRequestDetailDto);
+                        return gitService.saveJiraTickets(tasks);
+                    case "opened":
+                        differences = gitService
+                                .getCommittedChanges(pullRequestDetailDto.getPull_request().getDiff_url());
+                        gitService.putComment(gitService.getTodoLinesWithoutDates(differences), pullRequestDetailDto);
+                        return 1;
+                    case "synchronize":
+                        differences = gitService
+                                .getCommittedChanges(pullRequestDetailDto.getPull_request().getDiff_url());
+                        gitService.putComment(gitService.getTodoLinesWithoutDates(differences), pullRequestDetailDto);
+                        return 1;
+                }
+            case "push":
+                return 1;
+            default:
+                return 1;
         }
-        return null;
+
+        // if (event.equals("push")) {
+        // // PushDetailDto pushDetailDto = (PushDetailDto) ruleEngine.rule(event,
+        // // payload);
+        // // IssueDto tasks = gitService.generateJirasFromPush(pushDetailDto);
+        // // JiraController jiraController = new JiraController(jiraService);
+        // // jiraController.createTask(tasks);
+        // return null;
+        // } else if (event.equals("pull_request")) {
+        // PullRequestDetailDto pullRequestDetailDto = (PullRequestDetailDto)
+        // ruleEngine.rule(event, payload);
+        // if
+        // (pullRequestDetailDto.getAction().equals(PullRequestAction.closed.toString()))
+        // {
+        // IssueDto tasks = gitService.generateJirasFromMerge(pullRequestDetailDto);
+        // // JiraController jiraController = new JiraController(jiraService);
+        // // jiraController.createTask(tasks);
+        // if (gitService.saveJiraTickets(tasks) == 1)
+        // return "Successful";
+        // else
+        // return "failed";
+        // } else if
+        // (pullRequestDetailDto.getAction().equals(PullRequestAction.opened.toString()))
+        // {
+        // // PullRequestDetail details = gitService.getPullRequestDetails(payload);
+        // // System.out.println(details);
+        // String differences = gitService
+        // .getPullRequestChanges(pullRequestDetailDto.getPull_request().getDiff_url());
+        // gitService.putComment(gitService.getLinesTodosWithoutDates(differences),
+        // pullRequestDetailDto);
+        // return null;
+
+        // } else if
+        // (pullRequestDetailDto.getAction().equals(PullRequestAction.synchronize.toString()))
+        // {
+        // // PullRequestDetail details = gitService.getPullRequestDetails(payload);
+        // // System.out.println(details);
+        // String differences = gitService
+        // .getPullRequestChanges(pullRequestDetailDto.getPull_request().getDiff_url());
+        // gitService.putComment(gitService.getLinesTodosWithoutDates(differences),
+        // pullRequestDetailDto);
+        // return null;
+        // }
+        // }
+        // return null;
     }
 
-    @GetMapping("/")
-    List<String> getToDoTasks(@RequestBody String link) {
-        String changes = gitService.getPushChanges(link);
-        return gitService.parseToDos(changes);
+    // @GetMapping("/")
+    // List<String> getToDoTasks(@RequestBody String link) {
+    // String changes = gitService.getPushChanges(link);
+    // return gitService.parseToDos(changes);
 
-    }
+    // }
 
-    @Scheduled(fixedDelay = 60000)
-    public void scheduledTicketGenerator() {
-        JiraController jiraController = new JiraController(jiraService);
-        System.out.println(gitService.getTicketsFromDb());
-        List<Long> id = jiraController.createTask(gitService.getTicketsFromDb());
-        System.out.println(id);
-        if (gitService.changeJiraTicketStatus(id) == 1) {
-            System.out.println("Updation Successful");
-        } else {
-            System.out.println("Error in updating table");
-        }
-    }
 }

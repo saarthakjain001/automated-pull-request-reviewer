@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.example.webhooksserver.dtos.PayloadDto;
-import com.example.webhooksserver.mapper.ObjectToDto;
+import com.example.webhooksserver.ruleEngine.ObjectToDto;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
 public class RuleEngine {
     List<ObjectToDto<String, PayloadDto>> rules;
 

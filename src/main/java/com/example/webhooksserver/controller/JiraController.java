@@ -2,6 +2,7 @@
 package com.example.webhooksserver.controller;
 
 import com.example.webhooksserver.dtos.IssueDto;
+import com.example.webhooksserver.dtos.TodoDto;
 import com.example.webhooksserver.service.api.JiraService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,10 +24,9 @@ public class JiraController {
     }
 
     @PostMapping("/jira-service")
-    public List<Long> createTask(@RequestBody IssueDto jsonBody) {
-        System.out.println("Inside Controller");
-        System.out.println(jsonBody);
+    public TodoDto createTask(@RequestBody IssueDto jsonBody) {
         return service.createIssue(jsonBody.getUsername(), jsonBody.getTasks(), jsonBody.getDueDates(),
                 jsonBody.getId());
+
     }
 }

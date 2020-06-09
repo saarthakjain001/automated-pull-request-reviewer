@@ -14,4 +14,6 @@ public class JiraConfig {
     private String apitoken;
     private String url;
     private String useremail;
+    private String tasktype;
+    private String parent = null;
 }

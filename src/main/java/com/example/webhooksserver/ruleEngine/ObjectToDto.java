@@ -1,4 +1,4 @@
-package com.example.webhooksserver.mapper;
+package com.example.webhooksserver.ruleEngine;
 
 public interface ObjectToDto<I, O> {
     boolean matches(String input);

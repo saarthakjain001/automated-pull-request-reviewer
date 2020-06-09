@@ -23,7 +23,6 @@ public class ParserUtils {
 
     public static boolean hasDate(String parseString) {
         String regex = "(\\d{1,2}(/|-)\\d{1,2}(/|-)\\d{4})";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
         Pattern datePattern = Pattern.compile(regex);
         parseString.trim();
         Matcher m = datePattern.matcher(parseString);

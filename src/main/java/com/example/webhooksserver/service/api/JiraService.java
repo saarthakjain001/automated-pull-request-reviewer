@@ -6,10 +6,12 @@ import java.util.List;
 import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.example.webhooksserver.client.JiraClient;
+import com.example.webhooksserver.dtos.TodoDto;
 
 public interface JiraService {
-    List<Long> createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id);
+    TodoDto createIssue(String assignee, List<String> tasks, List<LocalDate> dueDates, List<Long> id);
 
-    String createEpic(String assignee, String epicTask, JiraRestClient myJiraClient);
+    // String createEpic(String assignee, String epicTask, JiraRestClient
+    // myJiraClient);
 
 }

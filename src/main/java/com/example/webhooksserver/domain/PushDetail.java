@@ -15,8 +15,5 @@ public class PushDetail extends PayloadEntity {
     @Id
     @GeneratedValue
     private Long prId;
-
-    // private String sender;
-    // private String repository;
     private String compare;
 }

@@ -5,8 +5,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.example.webhooksserver.mapper.ObjectToPullRequestDetailDto;
-import com.example.webhooksserver.mapper.ObjectToPushDetailDto;
 import com.example.webhooksserver.ruleEngine.RuleEngine;
 
 import org.springframework.boot.SpringApplication;
