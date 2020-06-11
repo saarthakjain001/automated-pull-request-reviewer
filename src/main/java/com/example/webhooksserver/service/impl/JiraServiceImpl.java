@@ -51,10 +51,6 @@ public class JiraServiceImpl implements JiraService {
         this.jiraTicketRepository = jiraTicketRepository;
         gitJiraClientrepo = gitJiraClientRepository;
         issueTypeRepo = projectIssueTypesRepository;
-        // List<GitJiraClient> keys = gitJiraClientRepository.findAll();
-        // for (GitJiraClient key : keys) {
-        // projectKeys.put(key.getRepoName(), key.getProjectKey());
-        // }
 
     }
 
@@ -90,6 +86,11 @@ public class JiraServiceImpl implements JiraService {
                 continue;
             }
 
+        }
+        try {
+            myJiraClient.close();
+        } catch (Exception e) {
+            log.info(e.getMessage());
         }
         return new TodoDto(successfulIds, retrievedJiraKeys);
     }
