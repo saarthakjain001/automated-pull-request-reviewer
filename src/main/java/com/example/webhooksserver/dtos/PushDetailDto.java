@@ -1,9 +1,5 @@
 package com.example.webhooksserver.dtos;
 
-import java.io.Serializable;
-
-import javax.persistence.Entity;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import lombok.Data;

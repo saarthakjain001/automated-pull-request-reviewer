@@ -16,12 +16,11 @@ public class ObjectToPushDetailDto implements ObjectToDto<String, PayloadDto> {
 
     @Override
     public boolean matches(String input) {
-        return input.equals(GitEvents.push.toString());
+        return input.equals(GitEvents.PUSH.getEvent());
     }
 
     @Override
     public PushDetailDto convertToDto(String input) {
-        // ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.readValue(input, PushDetailDto.class);
         } catch (Exception e) {

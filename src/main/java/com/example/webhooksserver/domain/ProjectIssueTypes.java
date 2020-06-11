@@ -4,16 +4,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
-import com.example.webhooksserver.dtos.GitRepoDto;
-import com.example.webhooksserver.dtos.OwnerDto;
-
 import lombok.Data;
 
 @Data
 @Entity
-public class PushDetail extends PayloadEntity {
+public class ProjectIssueTypes {
     @Id
     @GeneratedValue
-    private Long prId;
-    private String compare;
+    private Long id;
+    private String projectKey;
+    private String issueType;
+    private Long issueId;
+
 }

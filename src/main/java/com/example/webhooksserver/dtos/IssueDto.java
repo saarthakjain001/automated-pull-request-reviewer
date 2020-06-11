@@ -11,6 +11,7 @@ public class IssueDto {
     private String username;
     private List<String> tasks;
     private List<LocalDate> dueDates;
+    private String repoName;
 
     public String getUsername() {
         return username;

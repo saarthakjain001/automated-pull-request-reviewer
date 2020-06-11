@@ -6,8 +6,13 @@ import javax.persistence.Id;
 
 import lombok.Data;
 
+@Entity
 @Data
-public class PayloadEntity {
-    private String sender;
-    private String repository;
+public class GitJiraClient {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String repoName;
+    private String projectKey;
+
 }

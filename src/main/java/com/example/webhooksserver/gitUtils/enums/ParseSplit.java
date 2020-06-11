@@ -1,5 +1,5 @@
 package com.example.webhooksserver.gitUtils.enums;
 
-public enum ToDoEnum {
+public enum ParseSplit {
     TODO
 }

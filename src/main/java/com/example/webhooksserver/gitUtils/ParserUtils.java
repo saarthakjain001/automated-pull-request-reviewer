@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.example.webhooksserver.gitUtils.enums.ToDoEnum;
+import com.example.webhooksserver.gitUtils.enums.ParseSplit;
 
 public class ParserUtils {
 
@@ -15,7 +15,7 @@ public class ParserUtils {
         parseString = parseString.trim();
         Integer startIndex = -1;
         if (parseString.length() > (3) && parseString.charAt(0) == '+'
-                && (startIndex = parseString.indexOf(ToDoEnum.TODO.toString())) != -1) {
+                && (startIndex = parseString.indexOf(ParseSplit.TODO.toString())) != -1) {
             return true;
         }
         return false;
