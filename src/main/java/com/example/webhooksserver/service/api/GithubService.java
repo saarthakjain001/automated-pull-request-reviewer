@@ -10,5 +10,4 @@ import com.example.webhooksserver.dtos.PushDetailDto;
 
 public interface GithubService {
     void gitEventListener(String payload, String event);
-
 }

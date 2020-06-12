@@ -1,7 +1,14 @@
 package com.example.webhooksserver.controller;
 
+import java.util.Map;
+
+import com.example.webhooksserver.domain.GitJiraClient;
+import com.example.webhooksserver.domain.ProjectIssueTypes;
+import com.example.webhooksserver.dtos.JiraProjectIssueTypeDto;
 import com.example.webhooksserver.dtos.RepoTasksDto;
 import com.example.webhooksserver.dtos.TaskIssueMappingDto;
+import com.example.webhooksserver.repository.GitJiraClientRepository;
+import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
 import com.example.webhooksserver.service.api.ClientService;
 import com.example.webhooksserver.service.api.TaskService;
 
@@ -15,9 +22,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class ClientController {
 
     private final ClientService clientService;
+    private final GitJiraClientRepository gitJiraClientRepository;
 
-    ClientController(ClientService clientService) {
+    private final ProjectIssueTypesRepository projectIssueTypesRepository;
+
+    ClientController(ClientService clientService, GitJiraClientRepository gitJiraClientRepository,
+            ProjectIssueTypesRepository projectIssueTypesRepository) {
         this.clientService = clientService;
+        this.gitJiraClientRepository = gitJiraClientRepository;
+        this.projectIssueTypesRepository = projectIssueTypesRepository;
 
     }
 
@@ -52,8 +65,13 @@ public class ClientController {
         clientService.createIssueMapping(object);
     }
 
-    // @PostMapping("/client/task-service")
-    // void testTaskService(@RequestBody String repoName) {
-    // taskService.executeTasksForRepo(repoName);
-    // }
+    @PostMapping("/repo-project")
+    public String createProject(@RequestBody Map<String, String> obj) {
+        GitJiraClient client = new GitJiraClient();
+        client.setRepoName(obj.get("repoName"));
+        client.setProjectKey(obj.get("projectKey"));
+        gitJiraClientRepository.save(client);
+        return "Saved";
+    }
+
 }

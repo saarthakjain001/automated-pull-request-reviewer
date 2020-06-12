@@ -6,6 +6,8 @@ import java.util.Map;
 import com.example.webhooksserver.domain.GitJiraClient;
 import com.example.webhooksserver.domain.ProjectIssueTypes;
 import com.example.webhooksserver.dtos.IssueDto;
+import com.example.webhooksserver.dtos.JiraProjectForGitRepoDto;
+import com.example.webhooksserver.dtos.JiraProjectIssueTypeDto;
 import com.example.webhooksserver.dtos.TodoDto;
 import com.example.webhooksserver.repository.GitJiraClientRepository;
 import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
@@ -14,45 +16,27 @@ import com.example.webhooksserver.service.api.JiraService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/jira")
 public class JiraController {
 
-    private final JiraService service;
+    private final JiraService jiraService;
 
-    @Autowired
-    private GitJiraClientRepository repo;
-
-    @Autowired
-    private ProjectIssueTypesRepository issueRepo;
-
-    public JiraController(JiraService service) {
-        this.service = service;
+    public JiraController(JiraService jiraService) {
+        this.jiraService = jiraService;
 
     }
 
-    // @PostMapping("/jira-handler")
-    // public TodoDto createTask(@RequestBody IssueDto jsonBody) {
-    // return service.createIssue(jsonBody);
-    // }
-
     @PostMapping("/repo-project")
-    public String createProject(@RequestBody Map<String, String> obj) {
-        GitJiraClient client = new GitJiraClient();
-        client.setRepoName(obj.get("repoName"));
-        client.setProjectKey(obj.get("projectKey"));
-        repo.save(client);
-        return "Saved";
+    public void createProject(@RequestBody JiraProjectForGitRepoDto obj) {
+        jiraService.createProject(obj);
     }
 
     @PostMapping("/project-issue-types")
-    public String createIssueTypes(@RequestBody Map<String, String> obj) {
-        ProjectIssueTypes client = new ProjectIssueTypes();
-        client.setProjectKey(obj.get("projectKey"));
-        client.setIssueType(obj.get("issueType"));
-        client.setIssueId(Long.parseLong(obj.get("issueId")));
-        issueRepo.save(client);
-        return "Saved";
+    public void createIssueTypes(@RequestBody JiraProjectIssueTypeDto obj) {
+        jiraService.createJiraProjectIssueTypes(obj);
     }
 }

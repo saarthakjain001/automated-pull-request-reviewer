@@ -11,7 +11,4 @@ import org.springframework.data.jpa.repository.Query;
 public interface JiraTicketRepository extends JpaRepository<JiraTicket, Long> {
     List<JiraTicket> findAllByProcessed(Boolean processed);
 
-    // @Modifying
-    // @Query("update JiraTicket u set u.status = ?1 where u.id = ?2")
-    // int setStatusFor(String status, Long id);
 }

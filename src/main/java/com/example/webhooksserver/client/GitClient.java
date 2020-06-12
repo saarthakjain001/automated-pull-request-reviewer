@@ -44,18 +44,14 @@ public class GitClient {
 
     @Value("${github.user.agent}")
     private String user_agent;
-
-    private final JiraTicketRepository jiraTicketRepository;
     private final JiraEntriesRepository jiraEntriesRepository;
     private final GitRepoRepository gitRepoRepository;
     private final TaskToIssueMappingRepository taskToIssueMappingRepository;
     private final ObjectToDtoRuleEngine ruleEngine;
 
-    GitClient(JiraTicketRepository jiraTicketRepository, ObjectToDtoRuleEngine ruleEngine,
-            GitRepoRepository gitRepoRepository, TaskToIssueMappingRepository taskToIssueMappingRepository,
-            JiraEntriesRepository jiraEntriesRepository) {
+    GitClient(ObjectToDtoRuleEngine ruleEngine, GitRepoRepository gitRepoRepository,
+            TaskToIssueMappingRepository taskToIssueMappingRepository, JiraEntriesRepository jiraEntriesRepository) {
 
-        this.jiraTicketRepository = jiraTicketRepository;
         this.jiraEntriesRepository = jiraEntriesRepository;
         this.gitRepoRepository = gitRepoRepository;
         this.ruleEngine = ruleEngine;
@@ -120,18 +116,9 @@ public class GitClient {
         Long issueId = taskToIssueMappingRepository.findByTaskId(taskId).getIssueId();
         for (int i = 0; i < tasks.getTasks().size(); i++) {
             if (endDateList.get(i) != null) {
-                // JiraTicket newJiraTicket =
-                // JiraTicket.builder().task(taskList.get(i)).endDate(endDateList.get(i))
-                // .repoName(repoName).repoId(repoId).issueId(issueId).build();
-                // jiraTicketRepository.save(newJiraTicket);
                 JiraEntries newJiraEntry = JiraEntries.builder().task(taskList.get(i)).endDate(endDateList.get(i))
                         .repoName(repoName).repoId(repoId).issueId(issueId).build();
                 jiraEntriesRepository.save(newJiraEntry);
-                // IssueDtoToEntity.convertToEntity(taskList.get(i), endDateList.get(i),
-                // repoName);
-                // jiraTicketRepository.save(IssueDtoToEntity
-                // .convertToEntity(taskList.get(i), endDateList.get(i),
-                // repoName).setRepoId(repoId));
             }
         }
         return;
@@ -145,8 +132,10 @@ public class GitClient {
                     String differences;
                     switch (PullRequestAction.valueOfAction(pullRequestDetailDto.getAction())) {
                         case CLOSED:
-                            IssueDto tasks = generateTasksFromMerge(pullRequestDetailDto);
-                            saveJiraTickets(tasks, taskId);
+                            if (pullRequestDetailDto.getPull_request().getMerged_at() != null) {
+                                IssueDto tasks = generateTasksFromMerge(pullRequestDetailDto);
+                                saveJiraTickets(tasks, taskId);
+                            }
                             break;
                         case OPENED:
                         case SYNCHRONIZE:

@@ -74,7 +74,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void taskForTodos(String payload, String event, Long taskId) {
-        // gitService.executeTodoTasks(payload, event, taskId);
         gitClient.executeTodoTasks(payload, event, taskId);
     }
 

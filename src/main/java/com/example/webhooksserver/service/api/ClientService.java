@@ -15,4 +15,5 @@ public interface ClientService {
     Long addNewIssueType(String issue);
 
     void createIssueMapping(TaskIssueMappingDto object);
+
 }

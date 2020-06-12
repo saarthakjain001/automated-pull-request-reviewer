@@ -9,11 +9,6 @@ import lombok.Builder;
 
 public class IssueDtoToEntity {
     public static JiraTicket convertToEntity(String task, LocalDate date, String repoName) {
-        JiraTicket ticket = new JiraTicket();
-        ticket.setTask(task);
-        ticket.setEndDate(date);
-        ticket.setRepoName(repoName);
-        return ticket;
-        // return JiraTicket.builder().task(task).endDate(date).build();
+        return JiraTicket.builder().task(task).endDate(date).repoName(repoName).build();
     }
 }

@@ -11,4 +11,5 @@ public class PullRequestDetailDto extends PayloadDto {
     private Long number;
     private PullRequestDto pull_request;
     private GitRepoDto repository;
+    private boolean merged;
 }
