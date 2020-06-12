@@ -9,6 +9,7 @@ import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
 import com.example.webhooksserver.client.JiraClient;
 import com.example.webhooksserver.config.JiraConfig;
 import com.example.webhooksserver.domain.GitJiraClient;
+import com.example.webhooksserver.domain.JiraEntries;
 import com.example.webhooksserver.domain.JiraTicket;
 import com.example.webhooksserver.dtos.IssueDto;
 import com.example.webhooksserver.dtos.TodoDto;
@@ -16,6 +17,8 @@ import com.example.webhooksserver.gitUtils.ParserUtils;
 import com.example.webhooksserver.gitUtils.enums.JiraFields;
 import com.example.webhooksserver.mapper.EntityToIssueDto;
 import com.example.webhooksserver.repository.GitJiraClientRepository;
+import com.example.webhooksserver.repository.IssueTypeRepository;
+import com.example.webhooksserver.repository.JiraEntriesRepository;
 import com.example.webhooksserver.repository.JiraTicketRepository;
 import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
 import com.example.webhooksserver.service.api.JiraService;
@@ -42,19 +45,24 @@ public class JiraServiceImpl implements JiraService {
     private JiraConfig config;
 
     private final JiraTicketRepository jiraTicketRepository;
+    private final JiraEntriesRepository jiraEntriesRepository;
     private final GitJiraClientRepository gitJiraClientrepo;
-    private final ProjectIssueTypesRepository issueTypeRepo;
+    private final ProjectIssueTypesRepository projectIssueTypesRepo;
+    private final IssueTypeRepository issueTypeRepository;
     private Map<String, String> projectKeys;
 
     JiraServiceImpl(JiraTicketRepository jiraTicketRepository, GitJiraClientRepository gitJiraClientRepository,
-            ProjectIssueTypesRepository projectIssueTypesRepository) {
+            ProjectIssueTypesRepository projectIssueTypesRepository, IssueTypeRepository issueTypeRepository,
+            JiraEntriesRepository jiraEntriesRepository) {
         this.jiraTicketRepository = jiraTicketRepository;
         gitJiraClientrepo = gitJiraClientRepository;
-        issueTypeRepo = projectIssueTypesRepository;
+        projectIssueTypesRepo = projectIssueTypesRepository;
+        this.issueTypeRepository = issueTypeRepository;
+        this.jiraEntriesRepository = jiraEntriesRepository;
 
     }
 
-    public TodoDto createIssue(List<JiraTicket> tickets) {
+    public TodoDto createIssue(List<JiraEntries> tickets) {
         JiraRestClient myJiraClient = new JiraClient(config).getRestClient();
         IssueRestClient issueClient = myJiraClient.getIssueClient();
 
@@ -63,7 +71,11 @@ public class JiraServiceImpl implements JiraService {
         for (int i = 0; i < tickets.size(); i++) {
 
             String projectKey = gitJiraClientrepo.findByRepoName(tickets.get(i).getRepoName()).getProjectKey();
-            Long issueId = issueTypeRepo.findByProjectKeyAndIssueType(projectKey, config.getTasktype()).getIssueId();
+            String issueType = issueTypeRepository.findById(tickets.get(i).getIssueId()).get().getIssueType();
+            // Long issueId = projectIssueTypesRepo.findByProjectKeyAndIssueType(projectKey,
+            // config.getTasktype())
+            // .getIssueId();
+            Long issueId = projectIssueTypesRepo.findByProjectKeyAndIssueType(projectKey, issueType).getIssueId();
             IssueInputBuilder issueBuilder = new IssueInputBuilder(projectKey, issueId,
                     ParserUtils.removeDate(tickets.get(i).getTask()));
 
@@ -109,17 +121,39 @@ public class JiraServiceImpl implements JiraService {
         issueBuilder.setFieldInput(parentField);
     }
 
-    public List<JiraTicket> getTicketsFromDb() {
-        return jiraTicketRepository.findAllByProcessed(false);
+    // public List<JiraTicket> getTicketsFromDb() {
+    // return jiraTicketRepository.findAllByProcessed(false);
+    // }
+
+    public List<JiraEntries> getTicketsFromDb() {
+        return jiraEntriesRepository.findAllByProcessed(false);
     }
 
+    // @Override
+    // public void changeJiraTicketStatus(List<Long> id, List<String> jiraId) {
+    // List<JiraTicket> ticketList = jiraTicketRepository.findAllById(id);
+    // try {
+    // // for (JiraTicket tickets : ticketList) {
+    // for (int i = 0; i < id.size(); i++) {
+    // ticketList.get(i).setProcessed(true);
+    // ticketList.get(i).setJiraId(jiraId.get(i));
+    // jiraTicketRepository.save(ticketList.get(i));
+    // }
+    // } catch (Exception e) {
+    // return;
+    // }
+    // return;
+
+    // }
     @Override
-    public void changeJiraTicketStatus(List<Long> id) {
-        List<JiraTicket> ticketList = jiraTicketRepository.findAllById(id);
+    public void changeJiraTicketStatus(List<Long> id, List<String> jiraId) {
+        List<JiraEntries> ticketList = jiraEntriesRepository.findAllById(id);
         try {
-            for (JiraTicket tickets : ticketList) {
-                tickets.setProcessed(true);
-                jiraTicketRepository.save(tickets);
+            // for (JiraTicket tickets : ticketList) {
+            for (int i = 0; i < id.size(); i++) {
+                ticketList.get(i).setProcessed(true);
+                ticketList.get(i).setJiraId(jiraId.get(i));
+                jiraEntriesRepository.save(ticketList.get(i));
             }
         } catch (Exception e) {
             return;
@@ -131,7 +165,7 @@ public class JiraServiceImpl implements JiraService {
     @Override
     public void generateJiras() {
         TodoDto generatedTickets = createIssue(getTicketsFromDb());
-        changeJiraTicketStatus(generatedTickets.getId());
+        changeJiraTicketStatus(generatedTickets.getId(), generatedTickets.getJiraTicketKey());
     }
 
     // @Override

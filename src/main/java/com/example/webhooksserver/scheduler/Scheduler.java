@@ -12,7 +12,7 @@ public class Scheduler {
     @Autowired
     private JiraService jiraService;
 
-    // @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 60000)
     public void scheduledTicketGenerator() {
         jiraService.generateJiras();
     }

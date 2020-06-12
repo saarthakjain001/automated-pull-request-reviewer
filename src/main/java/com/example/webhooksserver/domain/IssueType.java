@@ -18,6 +18,5 @@ public class IssueType extends BaseEntity {
     IssueType() {
 
     }
-    // @OneToOne(mappedBy = "issueType")
-    // private Task taskType;
+
 }

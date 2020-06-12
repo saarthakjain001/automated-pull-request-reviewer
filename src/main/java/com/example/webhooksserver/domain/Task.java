@@ -31,12 +31,4 @@ public class Task extends BaseEntity {
 
     }
 
-    // @ManyToOne
-    // @JoinColumn(name = "repoId", referencedColumnName = "id")
-    // private GitRepo repo;
-
-    // @OneToOne
-    // @JoinColumn(name = "issueId", referencedColumnName = "id")
-    // private IssueType issueType;
-
 }

@@ -11,7 +11,4 @@ import com.example.webhooksserver.dtos.PushDetailDto;
 public interface GithubService {
     void gitEventListener(String payload, String event);
 
-    String putComment(HashMap<String, List<Integer>> todosWithoutDates, PullRequestDetailDto pullRequestDetailDto);
-
-    void saveJiraTickets(IssueDto tasks);
 }

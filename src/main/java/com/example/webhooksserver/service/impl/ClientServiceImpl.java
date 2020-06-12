@@ -170,11 +170,13 @@ public class ClientServiceImpl implements ClientService {
     }
 
     boolean validateRepository(String repoName) {
-        return gitRepoRepository.findByRepoName(repoName).isPresent();
+        if (gitRepoRepository.findByRepoName(repoName) != null)
+            return true;
+        return false;
     }
 
     Long getRepoId(String repoName) {
-        return gitRepoRepository.findByRepoName(repoName).get().getId();
+        return gitRepoRepository.findByRepoName(repoName).getId();
     }
 
 }

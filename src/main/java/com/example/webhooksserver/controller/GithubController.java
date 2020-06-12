@@ -21,12 +21,6 @@ public class GithubController {
     @Autowired
     private GithubService gitService;
 
-    // private final ObjectToDtoRuleEngine ruleEngine;
-
-    // GithubController(ObjectToDtoRuleEngine ruleEngine) {
-    // this.ruleEngine = ruleEngine;
-    // }
-
     @PostMapping("/git-handler")
     void gitEventListener(@RequestBody String payload, @RequestHeader("x-github-event") String event) {
         gitService.gitEventListener(payload, event);

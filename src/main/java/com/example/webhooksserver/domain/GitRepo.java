@@ -24,6 +24,5 @@ public class GitRepo extends BaseEntity {
     public GitRepo() {
 
     }
-    // @OneToMany(mappedBy = "repo")
-    // private Set<Task> tasks;
+
 }

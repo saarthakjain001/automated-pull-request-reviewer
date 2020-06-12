@@ -8,11 +8,14 @@ import javax.persistence.Id;
 
 import com.example.webhooksserver.gitUtils.enums.JiraTicketStatus;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Entity
+@Builder
+@AllArgsConstructor
 public class JiraTicket {
     @Id
     @GeneratedValue
@@ -22,6 +25,9 @@ public class JiraTicket {
     // private String status = JiraTicketStatus.UNPROCESSED.toString();
     private boolean processed = false;
     private String repoName;
+    private Long repoId;
+    private Long issueId;
+    private String jiraId;
 
     public JiraTicket() {
 
