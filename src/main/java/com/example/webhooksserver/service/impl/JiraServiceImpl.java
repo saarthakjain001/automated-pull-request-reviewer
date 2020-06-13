@@ -10,20 +10,19 @@ import com.example.webhooksserver.client.JiraClient;
 import com.example.webhooksserver.config.JiraConfig;
 import com.example.webhooksserver.domain.GitJiraClient;
 import com.example.webhooksserver.domain.JiraEntries;
-import com.example.webhooksserver.domain.JiraTicket;
 import com.example.webhooksserver.domain.ProjectIssueTypes;
 import com.example.webhooksserver.dtos.IssueDto;
 import com.example.webhooksserver.dtos.JiraProjectForGitRepoDto;
 import com.example.webhooksserver.dtos.JiraProjectIssueTypeDto;
 import com.example.webhooksserver.dtos.TodoDto;
 import com.example.webhooksserver.gitUtils.ParserUtils;
-import com.example.webhooksserver.gitUtils.enums.JiraFields;
-import com.example.webhooksserver.mapper.EntityToIssueDto;
+import com.example.webhooksserver.enums.JiraFields;
 import com.example.webhooksserver.repository.GitJiraClientRepository;
+import com.example.webhooksserver.repository.GitRepoRepository;
 import com.example.webhooksserver.repository.IssueTypeRepository;
 import com.example.webhooksserver.repository.JiraEntriesRepository;
-import com.example.webhooksserver.repository.JiraTicketRepository;
 import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
+import com.example.webhooksserver.repository.TaskToIssueMappingRepository;
 import com.example.webhooksserver.service.api.JiraService;
 import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 
@@ -51,17 +50,45 @@ public class JiraServiceImpl implements JiraService {
     private final GitJiraClientRepository gitJiraClientRepository;
     private final ProjectIssueTypesRepository projectIssueTypesRepository;
     private final IssueTypeRepository issueTypeRepository;
-    private Map<String, String> projectKeys;
+    private final GitRepoRepository gitRepoRepository;
+    private final TaskToIssueMappingRepository taskToIssueMappingRepository;
 
     JiraServiceImpl(GitJiraClientRepository gitJiraClientRepository,
             ProjectIssueTypesRepository projectIssueTypesRepository, IssueTypeRepository issueTypeRepository,
-            JiraEntriesRepository jiraEntriesRepository) {
+            JiraEntriesRepository jiraEntriesRepository, GitRepoRepository gitRepoRepository,
+            TaskToIssueMappingRepository taskToIssueMappingRepository) {
 
         this.gitJiraClientRepository = gitJiraClientRepository;
         this.projectIssueTypesRepository = projectIssueTypesRepository;
         this.issueTypeRepository = issueTypeRepository;
         this.jiraEntriesRepository = jiraEntriesRepository;
+        this.gitRepoRepository = gitRepoRepository;
+        this.taskToIssueMappingRepository = taskToIssueMappingRepository;
 
+    }
+
+    @Override
+    public void saveJiraTickets(IssueDto tasks, Long taskId) {
+        List<String> taskList = tasks.getTasks();
+        List<LocalDate> endDateList = tasks.getDueDates();
+        String repoName = tasks.getRepoName();
+        Long repoId = gitRepoRepository.findByRepoName(repoName).getId();
+        Long issueId = taskToIssueMappingRepository.findByTaskId(taskId).getIssueId();
+        for (int i = 0; i < tasks.getTasks().size(); i++) {
+            if (endDateList.get(i) != null) {
+                JiraEntries newJiraEntry = JiraEntries.builder().task(taskList.get(i)).endDate(endDateList.get(i))
+                        .repoName(repoName).repoId(repoId).issueId(issueId).build();
+                jiraEntriesRepository.save(newJiraEntry);
+            }
+        }
+        return;
+
+    }
+
+    @Override
+    public void generateJiras() {
+        TodoDto generatedTickets = createIssue(getTicketsFromDb());
+        changeJiraTicketStatus(generatedTickets.getId(), generatedTickets.getJiraTicketKey());
     }
 
     public TodoDto createIssue(List<JiraEntries> tickets) {
@@ -137,12 +164,6 @@ public class JiraServiceImpl implements JiraService {
         }
         return;
 
-    }
-
-    @Override
-    public void generateJiras() {
-        TodoDto generatedTickets = createIssue(getTicketsFromDb());
-        changeJiraTicketStatus(generatedTickets.getId(), generatedTickets.getJiraTicketKey());
     }
 
     @Override

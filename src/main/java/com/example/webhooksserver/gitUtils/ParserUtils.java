@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.example.webhooksserver.gitUtils.enums.ParseSplit;
+import com.example.webhooksserver.enums.ParseSplit;
 
 import org.springframework.web.client.RestTemplate;
 

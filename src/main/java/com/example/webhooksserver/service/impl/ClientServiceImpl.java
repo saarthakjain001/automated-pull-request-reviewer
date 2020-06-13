@@ -15,9 +15,9 @@ import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
 import com.example.webhooksserver.repository.TaskRepository;
 import com.example.webhooksserver.repository.TaskToIssueMappingRepository;
 import com.example.webhooksserver.service.api.ClientService;
-import com.example.webhooksserver.service.exceptions.NoSuchRepositoryException;
-import com.example.webhooksserver.service.exceptions.NoSuchTaskException;
-import com.example.webhooksserver.service.exceptions.OneToOneMappingExistsException;
+import com.example.webhooksserver.exceptions.NoSuchRepositoryException;
+import com.example.webhooksserver.exceptions.NoSuchTaskException;
+import com.example.webhooksserver.exceptions.OneToOneMappingExistsException;
 
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,7 @@
 package com.example.webhooksserver.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
@@ -9,7 +10,8 @@ import lombok.Data;
 public class PullRequestDetailDto extends PayloadDto {
     private String action;
     private Long number;
-    private PullRequestDto pull_request;
+    @JsonProperty("pull_request")
+    private PullRequestDto pullRequest;
     private GitRepoDto repository;
     private boolean merged;
 }

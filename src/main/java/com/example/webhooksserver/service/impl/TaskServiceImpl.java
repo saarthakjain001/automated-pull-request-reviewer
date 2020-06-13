@@ -3,16 +3,13 @@ package com.example.webhooksserver.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.example.webhooksserver.client.GitClient;
-import com.example.webhooksserver.domain.GitRepoTaskMapping;
-import com.example.webhooksserver.dtos.PullRequestDetailDto;
-import com.example.webhooksserver.gitUtils.enums.GitEvents;
-import com.example.webhooksserver.gitUtils.enums.PullRequestAction;
+import com.example.webhooksserver.enums.TaskEnum;
 import com.example.webhooksserver.repository.GitRepoRepository;
 import com.example.webhooksserver.repository.GitRepoTaskMappingRepository;
-import com.example.webhooksserver.service.api.GithubService;
+import com.example.webhooksserver.repository.TaskRepository;
 import com.example.webhooksserver.service.api.TaskService;
-import com.example.webhooksserver.service.exceptions.NoSuchRepositoryException;
+import com.example.webhooksserver.exceptions.NoSuchRepositoryException;
+import com.example.webhooksserver.processors.TaskProcessorFactory;
 
 import org.springframework.stereotype.Service;
 
@@ -23,13 +20,15 @@ import lombok.extern.slf4j.Slf4j;
 public class TaskServiceImpl implements TaskService {
     private final GitRepoTaskMappingRepository gitRepoTaskMappingRepository;
     private final GitRepoRepository gitRepoRepository;
-    private final GitClient gitClient;
+    private final TaskProcessorFactory taskProcessorFactory;
+    private final TaskRepository taskRepository;
 
     TaskServiceImpl(GitRepoRepository gitRepoRepository, GitRepoTaskMappingRepository gitRepoTaskMappingRepository,
-            GitClient gitClient) {
+            TaskProcessorFactory taskProcessorFactory, TaskRepository taskRepository) {
         this.gitRepoRepository = gitRepoRepository;
         this.gitRepoTaskMappingRepository = gitRepoTaskMappingRepository;
-        this.gitClient = gitClient;
+        this.taskProcessorFactory = taskProcessorFactory;
+        this.taskRepository = taskRepository;
     }
 
     Long getRepoId(String repoName) {
@@ -52,29 +51,22 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void executeTasksForRepo(String repoName, String payload, String event) {
-        getTasksForRepo(getRepoId(repoName)).forEach(taskId -> processTask(taskId.intValue(), payload, event));
+        getTasksForRepo(getRepoId(repoName)).forEach(taskId -> processTask(taskId, payload, event));
 
     }
 
-    public void processTask(int id, String payload, String event) {
-        switch (id) {
-            case 1:
-                taskForTodos(payload, event, Long.valueOf(id));
+    public void processTask(Long taskId, String payload, String event) {
+
+        switch (TaskEnum.valueOf(taskRepository.findById(taskId).get().getTaskType())) {
+            case TODO:
+                taskProcessorFactory.getTaskProcessor(TaskEnum.TODO).processTask(payload, event, taskId);
                 log.info("Task 1 process executed");
                 break;
-            case 2:
+            case TEST_CASE:
+                taskProcessorFactory.getTaskProcessor(TaskEnum.TEST_CASE).processTask(payload, event, taskId);
                 log.info("Task 2 process executed");
                 break;
-            case 3:
-                log.info("Task 3 process executed");
-                break;
-
         }
-    }
-
-    @Override
-    public void taskForTodos(String payload, String event, Long taskId) {
-        gitClient.executeTodoTasks(payload, event, taskId);
     }
 
 }

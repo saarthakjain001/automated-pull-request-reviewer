@@ -1,5 +1,7 @@
 package com.example.webhooksserver.dtos;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Data;
 
 @Data
@@ -8,13 +10,14 @@ public class ReviewCommentDto {
     private Integer position;
     private String side;
     private String body;
-    private String commit_id;
+    @JsonProperty("commit_id")
+    private String commitId;
 
-    public ReviewCommentDto(String path, Integer position, String side, String body, String commit_id) {
+    public ReviewCommentDto(String path, Integer position, String side, String body, String commitId) {
         this.path = path;
         this.position = position;
         this.side = side;
         this.body = body;
-        this.commit_id = commit_id;
+        this.commitId = commitId;
     }
 }
