@@ -1,6 +1,6 @@
 package com.example.webhooksserver.controller;
 
-import com.example.webhooksserver.service.api.GithubService;
+import com.example.webhooksserver.service.api.TaskService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class GithubController {
 
     @Autowired
-    private GithubService gitService;
+    private TaskService taskService;
 
     @PostMapping("/git-handler")
     void gitEventListener(@RequestBody String payload, @RequestHeader("x-github-event") String event) {
-        gitService.gitEventListener(payload, event);
+        taskService.executeTasksForRepo(payload, event);
     }
 }

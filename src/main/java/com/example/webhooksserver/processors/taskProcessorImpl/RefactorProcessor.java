@@ -5,7 +5,7 @@ import com.example.webhooksserver.processors.TaskProcessor;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TestCaseProcessor implements TaskProcessor {
+public class RefactorProcessor implements TaskProcessor {
 
     @Override
     public void processTask(String payload, String event, Long taskId) {

@@ -8,7 +8,7 @@ import com.example.webhooksserver.enums.PullRequestAction;
 import com.example.webhooksserver.exceptions.NotImplementedException;
 import com.example.webhooksserver.gitUtils.ParserUtils;
 import com.example.webhooksserver.processors.TaskProcessor;
-import com.example.webhooksserver.ruleEngine.ObjectToDtoRuleEngine;
+import com.example.webhooksserver.objectToDtoConvertor.ObjectToDtoConvertor;
 import com.example.webhooksserver.service.api.GithubService;
 import com.example.webhooksserver.service.api.JiraService;
 
@@ -28,25 +28,29 @@ public class TodoTaskProcessor implements TaskProcessor {
     private GitClient gitClient;
 
     @Autowired
-    private ObjectToDtoRuleEngine ruleEngine;
+    private ObjectToDtoConvertor objectToDtoConvertor;
+
+    @Autowired
+    private GithubService gitService;
 
     @Override
     public void processTask(String payload, String event, Long taskId) {
         try {
             switch (GitEvents.valueOfEvent(event)) {
                 case PULL_REQUEST:
-                    PullRequestDetailDto pullRequestDetailDto = (PullRequestDetailDto) ruleEngine.rule(event, payload);
+                    PullRequestDetailDto pullRequestDetailDto = (PullRequestDetailDto) objectToDtoConvertor.rule(event,
+                            payload);
                     String differences;
                     switch (PullRequestAction.valueOfAction(pullRequestDetailDto.getAction())) {
                         case CLOSED:
                             if (pullRequestDetailDto.getPullRequest().getMergedAt() != null) {
-                                IssueDto tasks = gitClient.extractTasksFromMerge(pullRequestDetailDto);
+                                IssueDto tasks = gitService.extractTasks(pullRequestDetailDto);
                                 jiraService.saveJiraTickets(tasks, taskId);
                             }
                             break;
                         case OPENED:
                         case SYNCHRONIZE:
-                            differences = ParserUtils
+                            differences = gitService
                                     .getCommittedChanges(pullRequestDetailDto.getPullRequest().getDiffUrl());
                             gitClient.putComment(ParserUtils.getTodoLinesWithoutDates(differences),
                                     pullRequestDetailDto);

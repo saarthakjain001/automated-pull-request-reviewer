@@ -1,4 +1,4 @@
-package com.example.webhooksserver.ruleEngine;
+package com.example.webhooksserver.objectToDtoConvertor;
 
 public interface ObjectToDto<I, O> {
     boolean matches(String input);

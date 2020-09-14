@@ -87,11 +87,11 @@ public class JiraServiceImpl implements JiraService {
 
     @Override
     public void generateJiras() {
-        TodoDto generatedTickets = createIssue(getTicketsFromDb());
+        TodoDto generatedTickets = createJira(getTicketsFromDb());
         changeJiraTicketStatus(generatedTickets.getId(), generatedTickets.getJiraTicketKey());
     }
 
-    public TodoDto createIssue(List<JiraEntries> tickets) {
+    public TodoDto createJira(List<JiraEntries> tickets) {
         JiraRestClient myJiraClient = new JiraClient(config).getRestClient();
         IssueRestClient issueClient = myJiraClient.getIssueClient();
 

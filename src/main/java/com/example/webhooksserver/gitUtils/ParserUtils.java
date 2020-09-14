@@ -13,8 +13,6 @@ import java.util.regex.Pattern;
 
 import com.example.webhooksserver.enums.ParseSplit;
 
-import org.springframework.web.client.RestTemplate;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -22,9 +20,8 @@ public class ParserUtils {
 
     public static boolean isTodo(String parseString) {
         parseString = parseString.trim();
-        Integer startIndex = -1;
         if (parseString.length() > (3) && parseString.charAt(0) == '+'
-                && (startIndex = parseString.indexOf(ParseSplit.TODO.toString())) != -1) {
+                && parseString.indexOf(ParseSplit.TODO.toString()) != -1) {
             return true;
         }
         return false;
@@ -88,13 +85,6 @@ public class ParserUtils {
         if (m.find())
             return todoString.substring(m.end());
         return todoString;
-    }
-
-    public static String getCommittedChanges(String httpLink) {
-        RestTemplate restTemplate = new RestTemplate();
-        String uri = httpLink;
-        String result = restTemplate.getForObject(uri, String.class);
-        return result;
     }
 
     public static List<String> parseToDos(String content) {

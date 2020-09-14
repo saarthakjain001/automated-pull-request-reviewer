@@ -1,7 +1,7 @@
-package com.example.webhooksserver.ruleEngine;
+package com.example.webhooksserver.objectToDtoConvertor;
 
 import com.example.webhooksserver.dtos.PayloadDto;
-import com.example.webhooksserver.dtos.PullRequestDetailDto;
+import com.example.webhooksserver.dtos.PushDetailDto;
 import com.example.webhooksserver.enums.GitEvents;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -9,21 +9,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ObjectToPullRequestDetailDto implements ObjectToDto<String, PayloadDto> {
+public class ObjectToPushDetailDto implements ObjectToDto<String, PayloadDto> {
 
     @Autowired
     private ObjectMapper objectMapper;
 
     @Override
     public boolean matches(String input) {
-        return input.equals(GitEvents.PULL_REQUEST.getEvent());
+        return input.equals(GitEvents.PUSH.getEvent());
     }
 
     @Override
-    public PullRequestDetailDto convertToDto(String input) {
-
+    public PushDetailDto convertToDto(String input) {
         try {
-            return objectMapper.readValue(input, PullRequestDetailDto.class);
+            return objectMapper.readValue(input, PushDetailDto.class);
         } catch (Exception e) {
             System.out.println(e);
             return null;

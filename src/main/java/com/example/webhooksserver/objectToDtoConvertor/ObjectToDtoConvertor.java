@@ -1,4 +1,4 @@
-package com.example.webhooksserver.ruleEngine;
+package com.example.webhooksserver.objectToDtoConvertor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ObjectToDtoRuleEngine {
+public class ObjectToDtoConvertor {
 
     private final ObjectToPullRequestDetailDto objToPullRequestDetailDto;
 
@@ -18,15 +18,13 @@ public class ObjectToDtoRuleEngine {
     List<ObjectToDto<String, PayloadDto>> rules;
 
     @Autowired
-    public ObjectToDtoRuleEngine(ObjectToPullRequestDetailDto objToPullRequestDetailDto,
+    public ObjectToDtoConvertor(ObjectToPullRequestDetailDto objToPullRequestDetailDto,
             ObjectToPushDetailDto objToPushDetailDto) {
         rules = new ArrayList<>();
         this.objToPullRequestDetailDto = objToPullRequestDetailDto;
         this.objToPushDetailDto = objToPushDetailDto;
         rules.add(objToPullRequestDetailDto);
         rules.add(objToPushDetailDto);
-        // this.registerRule(objToPullRequestDetailDto);
-        // this.registerRule(objToPushDetailDto);
 
     }
 
@@ -35,7 +33,7 @@ public class ObjectToDtoRuleEngine {
                 .orElseThrow(() -> new RuntimeException("No Matching rule found"));
     }
 
-    public ObjectToDtoRuleEngine registerRule(ObjectToDto<String, PayloadDto> rule) {
+    public ObjectToDtoConvertor registerRule(ObjectToDto<String, PayloadDto> rule) {
         rules.add(rule);
         return this;
     }

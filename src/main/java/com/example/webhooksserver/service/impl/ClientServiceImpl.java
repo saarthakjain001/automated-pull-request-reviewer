@@ -7,17 +7,15 @@ import com.example.webhooksserver.domain.Task;
 import com.example.webhooksserver.domain.TaskToIssueMapping;
 import com.example.webhooksserver.dtos.RepoTasksDto;
 import com.example.webhooksserver.dtos.TaskIssueMappingDto;
-import com.example.webhooksserver.repository.GitJiraClientRepository;
-import com.example.webhooksserver.repository.GitRepoRepository;
-import com.example.webhooksserver.repository.GitRepoTaskMappingRepository;
-import com.example.webhooksserver.repository.IssueTypeRepository;
-import com.example.webhooksserver.repository.ProjectIssueTypesRepository;
-import com.example.webhooksserver.repository.TaskRepository;
-import com.example.webhooksserver.repository.TaskToIssueMappingRepository;
-import com.example.webhooksserver.service.api.ClientService;
 import com.example.webhooksserver.exceptions.NoSuchRepositoryException;
 import com.example.webhooksserver.exceptions.NoSuchTaskException;
 import com.example.webhooksserver.exceptions.OneToOneMappingExistsException;
+import com.example.webhooksserver.repository.GitRepoRepository;
+import com.example.webhooksserver.repository.GitRepoTaskMappingRepository;
+import com.example.webhooksserver.repository.IssueTypeRepository;
+import com.example.webhooksserver.repository.TaskRepository;
+import com.example.webhooksserver.repository.TaskToIssueMappingRepository;
+import com.example.webhooksserver.service.api.ClientService;
 
 import org.springframework.stereotype.Service;
 
@@ -32,21 +30,16 @@ public class ClientServiceImpl implements ClientService {
     private final GitRepoTaskMappingRepository gitRepoTaskMappingRepository;
     private final IssueTypeRepository issueTypeRepository;
     private final TaskToIssueMappingRepository taskToIssueMappingRepository;
-    private final GitJiraClientRepository gitJiraClientRepository;
-    private final ProjectIssueTypesRepository projectIssueTypesRepository;
 
     ClientServiceImpl(GitRepoRepository gitRepoRepository, TaskRepository taskRepo,
             GitRepoTaskMappingRepository gitRepoTaskMappingRepository, IssueTypeRepository issueTypeRepository,
-            TaskToIssueMappingRepository taskToIssueMappingRepository, GitJiraClientRepository gitJiraClientRepository,
-            ProjectIssueTypesRepository projectIssueTypesRepository) {
+            TaskToIssueMappingRepository taskToIssueMappingRepository) {
 
         this.gitRepoRepository = gitRepoRepository;
         this.taskRepo = taskRepo;
         this.gitRepoTaskMappingRepository = gitRepoTaskMappingRepository;
         this.issueTypeRepository = issueTypeRepository;
         this.taskToIssueMappingRepository = taskToIssueMappingRepository;
-        this.gitJiraClientRepository = gitJiraClientRepository;
-        this.projectIssueTypesRepository = projectIssueTypesRepository;
     }
 
     @Override

@@ -1,6 +1,5 @@
 package com.example.webhooksserver.scheduler;
 
-import com.example.webhooksserver.controller.JiraController;
 import com.example.webhooksserver.service.api.JiraService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,7 @@ public class Scheduler {
     @Autowired
     private JiraService jiraService;
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 30000)
     public void scheduledTicketGenerator() {
         jiraService.generateJiras();
     }
